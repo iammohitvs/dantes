@@ -12,10 +12,15 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.2",
-    "sqlite3": "^6.0.1"
+    "better-sqlite3": "^12.10.0",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "drizzle-kit": "^0.31.10"
   }
 }

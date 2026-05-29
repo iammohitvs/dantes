@@ -1,3 +1,9 @@
-export const db = {
-    hello: () => {console.log("HI");}
-}
+import { db } from "./db.js";
+
+const database: {
+  db: typeof db;
+} = {
+  db,
+};
+
+export default database;

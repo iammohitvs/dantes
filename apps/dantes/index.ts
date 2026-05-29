@@ -1,3 +1,3 @@
-import { db } from "@packages/db";
+import database from "@packages/db";
 
-db.hello();
+console.log(database.db);
