@@ -1,3 +1,3 @@
 import { db } from "@packages/db";
 
-db.helloe()
+db.hello();
