@@ -1,0 +1,17 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  apps/dantes:
+    dependencies:
+      '@packages/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+
+  packages/db: {}
