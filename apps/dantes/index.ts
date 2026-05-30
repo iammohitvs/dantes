@@ -1,3 +1,3 @@
-import database from "@packages/db";
+import { db } from "./package-items/db.ts";
 
-console.log(database.db);
+console.log(await db.query.JobSchema.findMany())

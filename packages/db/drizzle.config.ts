@@ -4,6 +4,6 @@ export default defineConfig({
   schema: "./schemas/*",
   dialect: "sqlite",
   dbCredentials: {
-    url: "./dantes.db",
+    url: "../../dantes.db",
   },
 });
