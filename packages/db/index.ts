@@ -1,9 +1,7 @@
-import { db } from "./db.ts";
+import { db as database } from "./db.ts";
+import * as drizzleOrm from "drizzle-orm"
 
-const database: {
-  db: typeof db;
-} = {
-  db,
-};
+export const db = database;
+export * as db_utils from "./schemas/index.js";
 
-export default database;
+export const drizzle_orm = drizzleOrm
