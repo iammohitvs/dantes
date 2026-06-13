@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { sqliteTable, text, int } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { timestamps } from "./helpers.js";
 
 export const QueueSchema = sqliteTable("queue", {
@@ -10,7 +10,8 @@ export const QueueSchema = sqliteTable("queue", {
     .notNull(),
   name: text().unique().notNull(),
   callbackUrl: text("callback_url").notNull(),
-  
+  retry_count: integer().default(3).notNull(),
+
   ...timestamps,
 });
 

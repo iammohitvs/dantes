@@ -10,7 +10,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@packages/db": "workspace:*"
+    "@packages/db": "workspace:*",
+    "fastify": "^5.8.5"
   },
   "keywords": [],
   "author": "",

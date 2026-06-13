@@ -16,7 +16,6 @@ export const JobSchema = sqliteTable("job", {
     .default("SINGLE")
     .notNull(),
   status: text({ enum: ["IDLE", "PENDING", "SUCCESS", "FAILURE"] }).notNull(),
-  retry_count: integer().default(3).notNull(),
   next_execution: integer({ mode: "timestamp" }),
   last_execution: integer({ mode: "timestamp" }),
   execution_recall: text({ mode: "json" }).$type<ExecutionRecall>(),

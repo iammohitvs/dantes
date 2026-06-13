@@ -2,6 +2,7 @@ import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { randomUUID } from "node:crypto";
 import { timestamps } from "./helpers.ts";
 import { JobSchema } from "./Job.ts";
+import { RunSchema } from "./Run.ts";
 
 export const ExecutionSchema = sqliteTable("execution", {
   id: text()
@@ -9,7 +10,7 @@ export const ExecutionSchema = sqliteTable("execution", {
     .unique()
     .primaryKey()
     .notNull(),
-  status: text({ enum: ["IDLE", "RUNNING"] })
+  status: text({ enum: ["IDLE", "RUNNING", "SUCCESS", "FAILURE"] })
     .notNull()
     .default("RUNNING"),
   response: text(),
@@ -17,6 +18,7 @@ export const ExecutionSchema = sqliteTable("execution", {
   ...timestamps,
 
   jobId: text("job_id").references(() => JobSchema.id),
+  runId: text("run_id").references(() => RunSchema.id),
 });
 
 // this is the execution reference of a job

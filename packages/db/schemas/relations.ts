@@ -16,20 +16,17 @@ export const jobRelations = relations(JobSchema, ({ one, many }) => ({
   executions: many(ExecutionSchema),
 }));
 
-export const runRelations = relations(RunSchema, ({ one }) => ({
-  queue: one(QueueSchema, {
-    fields: [RunSchema.queueId],
-    references: [QueueSchema.id],
-  }),
-  job: one(JobSchema, {
-    fields: [RunSchema.jobId],
-    references: [JobSchema.id],
-  }),
-}));
-
 export const executionRelations = relations(ExecutionSchema, ({ one }) => ({
   job: one(JobSchema, {
     fields: [ExecutionSchema.jobId],
     references: [JobSchema.id],
   }),
 }));
+
+export const runRelations = relations(RunSchema, ({ one }) => ({
+  execution: one(ExecutionSchema, {
+    fields: [RunSchema.executionId],
+    references: [ExecutionSchema.id]
+  })
+}));
+

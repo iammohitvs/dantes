@@ -1,3 +1,5 @@
+import "./server/index.ts";
+
 import { db, db_utils } from "./packages-tunnel/db.ts";
 import { Loop } from "./core/loop/index.ts";
 import { Executable } from "./core/executable/index.ts";
