@@ -7,3 +7,6 @@ build
 
 # all database files
 *.db
+
+# TODO lsit
+TODO.txt
