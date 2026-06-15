@@ -17,7 +17,9 @@ export const ExecutionSchema = sqliteTable("execution", {
 
   ...timestamps,
 
-  jobId: text("job_id").references(() => JobSchema.id),
+  jobId: text("job_id")
+    .references(() => JobSchema.id)
+    .notNull(),
   runId: text("run_id").references(() => RunSchema.id),
 });
 

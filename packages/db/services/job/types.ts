@@ -2,7 +2,7 @@ import * as db_utils from "../../schemas/index.ts";
 
 export type ManyJobs = Promise<db_utils.Job[]>;
 
-export type SingleJob = Promise<db_utils.Job>;
+export type SingleJob = Promise<db_utils.Job | null>;
 
 export type GetJobsType = {
   type?: "SINGLE" | "CRON";

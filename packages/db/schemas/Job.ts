@@ -22,7 +22,9 @@ export const JobSchema = sqliteTable("job", {
 
   ...timestamps,
 
-  queueId: text("queue_id").references(() => QueueSchema.id),
+  queueId: text("queue_id")
+    .references(() => QueueSchema.id)
+    .notNull(),
 });
 
 export type Job = typeof JobSchema.$inferSelect;

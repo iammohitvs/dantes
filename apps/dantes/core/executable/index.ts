@@ -1,25 +1,15 @@
-import { drizzle_orm } from "@packages/db";
-import { db, db_utils } from "../../packages-tunnel/db.ts";
+import { drizzle_orm, queue_utils } from "@packages/db";
+import { db, db_utils, job_utils } from "../../packages-tunnel/db.ts";
 import { addJobResponse, jobReply } from "../types.ts";
+import { apiClient } from "../../utils/apiclient.ts";
 
 const { eq } = drizzle_orm;
 
-const pickNextJobToExecute = async () => {
-  const job = await db
-    .select()
-    .from(db_utils.JobSchema)
-    .where(eq(db_utils.JobSchema.status, "IDLE"));
-
-  return job;
-};
-
-const createJob = async (job: db_utils.NewJob) => {
-  const newJob = await db.insert(db_utils.JobSchema).values(job);
-
-  return newJob;
-};
-
 export class Executable {
+  private MAX_JOB_CONCURRENCY: number = Number(
+    process.env.MAX_JOB_CONCURRENCY!
+  );
+
   private running_items: string[] = [];
   public running_items_count: number = 0;
 
@@ -27,36 +17,52 @@ export class Executable {
     console.log("Executable created!");
   }
 
-  public async executeNextJob() {
-    console.log(await pickNextJobToExecute());
+  public dispatchJob(jobId: string, callbackUrl: string, payload: string) {
+    const response = apiClient
+      .post(callbackUrl, JSON.parse(payload))
+      .catch(async (err) => {
+        await this.onReply({ jobId, status: "error", message: err.message });
+      });
   }
 
-  public async addJob(job: db_utils.NewJob): Promise<addJobResponse> {
-    if (this.running_items_count == 5) {
-      return {
-        status: "error",
-        message: "Limit of concurrent running job already reached",
-      };
+  public async executeNextJob() {
+    if (this.running_items_count >= this.MAX_JOB_CONCURRENCY) {
+      console.warn("% jobs already running in parallel");
     }
-    /* const addedJob: db_utils.Job = await createJob(); */ // create this funtion in db_utils as helper utils or somehting
+    const selectedJob = await job_utils.pickNextJobToExecute();
 
-    // this.running_items.push(addedJob.id);
+    if (!selectedJob) {
+      console.warn("No IDLE jobs available");
+      return;
+    }
+
+    const selectedQueue = await queue_utils.getQueueById(selectedJob.queueId);
+
+    if (!selectedQueue) {
+      console.warn("No queue for the chosen job");
+      return;
+    }
+
+    this.dispatchJob(
+      selectedJob.id,
+      selectedQueue.callbackUrl,
+      selectedJob.payload
+    );
+
+    job_utils.setJobAsRunning(selectedJob.id);
+
+    this.running_items.push(selectedJob.id);
     this.running_items_count += 1;
-
-    return {
-      status: "success",
-      message: "Job added successfully",
-    };
   }
 
   public async onReply(reply: jobReply): Promise<void> {
-    /* if (reply.status === "error") {
-      await setJobAsErrored(reply.jobId); // create this util too
+    if (reply.status === "error") {
+      await job_utils.setJobAsErrored(reply.jobId); // create this util too
       console.log("Job errored and recorded");
       return;
     }
 
-    await setJobAsSuccessful(reply.jobId);
-    console.log("Job set as successful"); */
+    await job_utils.setJobAsSuccessful(reply.jobId);
+    console.log("Job set as successful");
   }
 }

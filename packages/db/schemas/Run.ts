@@ -17,7 +17,7 @@ export const RunSchema = sqliteTable("run", {
 
   ...timestamps,
 
-  executionId: text("execution_id"),
+  executionId: text("execution_id").notNull(),
 });
 
 export type Run = typeof RunSchema.$inferSelect;
