@@ -79,7 +79,8 @@ export const pickNextJobToExecute = async (): SingleJob => {
   const chosenJobs = await db
     .select()
     .from(db_utils.JobSchema)
-    .where(eq(db_utils.JobSchema.status, "IDLE"));
+    .where(eq(db_utils.JobSchema.status, "IDLE"))
+    .orderBy(db_utils.JobSchema.createdAt);
 
   if (chosenJobs.length) return chosenJobs[0];
   else return null;

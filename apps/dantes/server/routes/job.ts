@@ -7,7 +7,7 @@ export const jobRoute = async (fastify: FastifyInstance) => {
 
     const jobs = await job_utils.getJobs(type, status, queueId);
 
-    res.code(200).send(jobs);
+    res.code(200).send({ status: "success", jobs, jobsCount: jobs.length });
   });
 
   fastify.get("/:jobId", async (req, res) => {
@@ -15,7 +15,10 @@ export const jobRoute = async (fastify: FastifyInstance) => {
 
     const job = await job_utils.getJobByJobId(jobId);
 
-    return res.status(200).send(job);
+    if (!job)
+      res.status(404).send({ status: "error", message: "Job not found" });
+
+    return res.status(200).send({ status: "success", job });
   });
 
   fastify.post("/", async (req, res) => {
@@ -23,13 +26,23 @@ export const jobRoute = async (fastify: FastifyInstance) => {
 
     const createdJob = await job_utils.createJob(newJob);
 
-    return res.status(200).send(createdJob);
+    if (!createdJob)
+      res
+        .status(500)
+        .send({ status: "error", message: "Error creating your job" });
+
+    return res.status(200).send({ status: "success", createdJob });
   });
 
   fastify.delete("/:jobId", async (req, res) => {
     const { jobId } = req.params as { jobId: string };
 
     const deletedJob = await job_utils.deleteJob(jobId);
+
+    if (!deletedJob)
+      res
+        .status(500)
+        .send({ status: "error", message: "Error deleting your job" });
 
     return res.status(200).send(deletedJob);
   });

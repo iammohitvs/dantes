@@ -22,7 +22,7 @@ export class Loop {
 
   public startLoop() {
     this.loopId = setInterval(
-      this.executable.executeNextJob,
+      this.executable.executeNextJob.bind(this.executable),
       this.wait_time_ms,
       ...this.params
     );

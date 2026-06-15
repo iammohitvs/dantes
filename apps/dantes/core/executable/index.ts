@@ -1,9 +1,11 @@
-import { drizzle_orm, queue_utils } from "@packages/db";
-import { db, db_utils, job_utils } from "../../packages-tunnel/db.ts";
+import {
+  db,
+  db_utils,
+  job_utils,
+  queue_utils,
+} from "../../packages-tunnel/db.ts";
 import { addJobResponse, jobReply } from "../types.ts";
 import { apiClient } from "../../utils/apiclient.ts";
-
-const { eq } = drizzle_orm;
 
 export class Executable {
   private MAX_JOB_CONCURRENCY: number = Number(
@@ -17,9 +19,9 @@ export class Executable {
     console.log("Executable created!");
   }
 
-  public dispatchJob(jobId: string, callbackUrl: string, payload: string) {
-    const response = apiClient
-      .post(callbackUrl, JSON.parse(payload))
+  dispatchJob(jobId: string, callbackUrl: string, payload: string) {
+    /* const response =  */ apiClient
+      .post(callbackUrl, { payload })
       .catch(async (err) => {
         await this.onReply({ jobId, status: "error", message: err.message });
       });
@@ -53,6 +55,8 @@ export class Executable {
 
     this.running_items.push(selectedJob.id);
     this.running_items_count += 1;
+
+    console.log("Job added to the running list: ", selectedJob.id);
   }
 
   public async onReply(reply: jobReply): Promise<void> {

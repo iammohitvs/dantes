@@ -12,3 +12,13 @@ export const getQueueById = async (queueId: string) => {
   if (foundJobs.length) return foundJobs[0];
   else return null;
 };
+
+export const createQueue = async (queue: db_utils.NewQueue) => {
+  const createdQueues = await db
+    .insert(db_utils.QueueSchema)
+    .values(queue)
+    .returning();
+
+  if (createdQueues) return createdQueues[0];
+  else return null;
+};
