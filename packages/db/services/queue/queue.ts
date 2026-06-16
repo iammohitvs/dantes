@@ -19,6 +19,6 @@ export const createQueue = async (queue: db_utils.NewQueue) => {
     .values(queue)
     .returning();
 
-  if (createdQueues) return createdQueues[0];
+  if (createdQueues.length) return createdQueues[0];
   else return null;
 };

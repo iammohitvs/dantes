@@ -51,6 +51,7 @@ export const updateJob = async (
     status?: "IDLE" | "PENDING" | "SUCCESS" | "FAILURE";
     queueId?: string;
   } = {};
+  
   if (type) updatedJobItems["type"] = type;
   if (status) updatedJobItems["status"] = status;
   if (queueId) updatedJobItems["queueId"] = queueId;

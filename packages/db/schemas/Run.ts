@@ -11,9 +11,9 @@ export const RunSchema = sqliteTable("run", {
     .unique()
     .primaryKey()
     .notNull(),
-  isActive: integer("is_active", { mode: "boolean" }).default(false),
-  runtImeStart: integer("run_time_start", { mode: "timestamp" }),
-  runtImeEnd: integer("run_time_end", { mode: "timestamp" }),
+  isActive: integer("is_active", { mode: "boolean" }).default(true).notNull(),
+  runTimeStart: integer("run_time_start", { mode: "timestamp" }).notNull(),
+  runTimeEnd: integer("run_time_end", { mode: "timestamp" }),
 
   ...timestamps,
 

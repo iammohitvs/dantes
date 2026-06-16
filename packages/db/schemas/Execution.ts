@@ -10,10 +10,10 @@ export const ExecutionSchema = sqliteTable("execution", {
     .unique()
     .primaryKey()
     .notNull(),
-  status: text({ enum: ["IDLE", "RUNNING", "SUCCESS", "FAILURE"] })
+  status: text({ enum: ["RUNNING", "SUCCESS", "FAILURE"] })
     .notNull()
     .default("RUNNING"),
-  response: text(),
+  reply: text(),
 
   ...timestamps,
 
