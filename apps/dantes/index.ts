@@ -6,7 +6,7 @@ import { Executable } from "./core/executable/index.ts";
 
 const WAIT_TIME_MS = 1 * 1000; // 1 second
 
-/* 
+
 const createdQueue = await queue_utils.createQueue({
   name: "Test Queue",
   callbackUrl: "https://localhost:12345/",
@@ -18,9 +18,9 @@ await db.insert(db_utils.JobSchema).values({
   payload: "Test Job paylaod",
   status: "IDLE",
   queueId: createdQueue.id,
-}); */
+});
 
-const executable = new Executable();
+export const executable = new Executable();
 
 const loop = new Loop(executable, WAIT_TIME_MS, []);
 

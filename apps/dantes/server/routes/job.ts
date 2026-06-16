@@ -7,7 +7,7 @@ export const jobRoute = async (fastify: FastifyInstance) => {
 
     const jobs = await job_utils.getJobs(type, status, queueId);
 
-    res.code(200).send({ status: "success", jobs, jobsCount: jobs.length });
+    return res.code(200).send({ status: "success", jobs, jobsCount: jobs.length });
   });
 
   fastify.get("/:jobId", async (req, res) => {

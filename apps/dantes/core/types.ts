@@ -10,3 +10,7 @@ export interface jobReply extends jobMethodResponseBase {
   message: string;
   jobId: string;
 }
+
+export interface onReplyReturnType extends jobMethodResponseBase {
+  message: string;
+}
