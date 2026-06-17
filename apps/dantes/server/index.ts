@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { jobRoute } from "./routes/job.ts";
+import { queueRoute } from "./routes/queue.ts";
 import { replyRoute } from "./routes/reply.ts";
 
 const PORT = Number(process.env.PORT) || 6969;
@@ -16,6 +17,7 @@ fastify.get("/health", (req, res) => {
 
 fastify.register(jobRoute, { prefix: "/job" });
 fastify.register(replyRoute, { prefix: "/reply" });
+fastify.register(queueRoute, { prefix: "/queue" });
 
 fastify.listen({ port: PORT }, (err, address) => {
   if (err) {

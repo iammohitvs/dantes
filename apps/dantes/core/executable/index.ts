@@ -8,6 +8,7 @@ import {
 } from "../../packages-tunnel/db.ts";
 import { addJobResponse, jobReply, onReplyReturnType } from "../types.ts";
 import { apiClient } from "../../utils/apiclient.ts";
+import { Mutex } from "../mutex/index.ts";
 
 export class Executable {
   private MAX_JOB_CONCURRENCY: number = Number(
@@ -20,6 +21,8 @@ export class Executable {
     runId: string;
   }[] = [];
   public running_items_count: number = this.running_items.length || 0;
+
+  private job_selection_mutex: Mutex = new Mutex();
 
   constructor() {
     console.log("Executable created!");
@@ -39,67 +42,75 @@ export class Executable {
 
   public async executeNextJob() {
     if (this.running_items_count >= this.MAX_JOB_CONCURRENCY) {
-      console.warn("% jobs already running in parallel");
-    }
-    const selectedJob = await job_utils.pickNextJobToExecute();
-
-    if (!selectedJob) {
-      console.warn("No IDLE jobs available");
-      return;
-    }
-
-    const callbackUrl = await queue_utils.getQueueCallbackUrl(selectedJob.queueId);
-
-    if (!callbackUrl) {
-      console.warn("No callbackUrl for the chosen job");
-      return;
-    }
-
-    const createdExecution = await execution_utils.createExecution({
-      jobId: selectedJob.id,
-      status: "RUNNING",
-    });
-
-    if (!createdExecution) {
       console.warn(
-        "Error creating a execution instance for this job execution"
+        `${this.MAX_JOB_CONCURRENCY}(Maximum deinfed concurrency) jobs already running in parallel`
       );
       return;
     }
 
-    const runTimeStart = new Date(Date.now());
-    const createdRun = await run_utils.createRun({
-      executionId: createdExecution.id,
-      runTimeStart,
-    });
+    await this.job_selection_mutex.activate();
 
-    if (!createdRun) {
-      console.warn("Error creating a run instance for this job execution");
-      return;
+    let selectedJob: null | db_utils.Job = null;
+
+    try {
+      selectedJob = await job_utils.pickNextJobToExecute();
+
+      if (!selectedJob) {
+        console.warn("No IDLE jobs available");
+        return;
+      }
+
+      const callbackUrl = await queue_utils.getQueueCallbackUrl(
+        selectedJob.queueId
+      );
+
+      if (!callbackUrl) {
+        console.warn("No callbackUrl for the chosen job");
+        return;
+      }
+
+      const createdExecution = await execution_utils.createExecution({
+        jobId: selectedJob.id,
+        status: "RUNNING",
+      });
+
+      if (!createdExecution) {
+        console.warn(
+          "Error creating a execution instance for this job execution"
+        );
+        return;
+      }
+
+      const runTimeStart = new Date(Date.now());
+      const createdRun = await run_utils.createRun({
+        executionId: createdExecution.id,
+        runTimeStart,
+      });
+
+      if (!createdRun) {
+        console.warn("Error creating a run instance for this job execution");
+        return;
+      }
+
+      await execution_utils.updateExecution(createdExecution.id, {
+        runId: createdRun.id,
+      });
+
+      await job_utils.setJobAsRunning(selectedJob.id);
+
+      this.dispatchJob(selectedJob.id, callbackUrl, selectedJob.payload);
+
+      this.running_items.push({
+        jobId: selectedJob.id,
+        executionId: createdExecution.id,
+        runId: createdRun.id,
+      });
+      this.running_items_count += 1;
+
+      console.log("Job added to the running list: ", selectedJob.id);
+    } finally {
+      this.job_selection_mutex.deactivate();
     }
-
-    await execution_utils.updateExecution(
-      createdExecution.id,
-      undefined,
-      createdRun.id
-    );
-
-    this.dispatchJob(
-      selectedJob.id,
-      callbackUrl,
-      selectedJob.payload
-    );
-
-    await job_utils.setJobAsRunning(selectedJob.id);
-
-    this.running_items.push({
-      jobId: selectedJob.id,
-      executionId: createdExecution.id,
-      runId: createdRun.id,
-    });
-    this.running_items_count += 1;
-
-    console.log("Job added to the running list: ", selectedJob.id);
   }
 
   public async onReply(reply: jobReply): Promise<onReplyReturnType> {
@@ -130,12 +141,10 @@ export class Executable {
     switch (reply.status) {
       case "success":
         // update run -> execution -> job
-        await run_utils.updateRun(
-          replied_running_item.runId,
-          false,
-          undefined,
-          runTimeEnd
-        );
+        await run_utils.updateRun(replied_running_item.runId, {
+          isActive: false,
+          runTimeEnd,
+        });
 
         await execution_utils.setExecutionAsSuccessful(
           replied_running_item.executionId,
@@ -151,12 +160,10 @@ export class Executable {
         return { status: "success", message };
 
       case "error":
-        await run_utils.updateRun(
-          replied_running_item.runId,
-          false,
-          undefined,
-          runTimeEnd
-        );
+        await run_utils.updateRun(replied_running_item.runId, {
+          isActive: false,
+          runTimeEnd,
+        });
 
         await execution_utils.setExecutionAsFailed(
           replied_running_item.executionId,
