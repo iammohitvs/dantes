@@ -48,10 +48,10 @@ export class Executable {
       return;
     }
 
-    const selectedQueue = await queue_utils.getQueueById(selectedJob.queueId);
+    const callbackUrl = await queue_utils.getQueueCallbackUrl(selectedJob.queueId);
 
-    if (!selectedQueue) {
-      console.warn("No queue for the chosen job");
+    if (!callbackUrl) {
+      console.warn("No callbackUrl for the chosen job");
       return;
     }
 
@@ -86,7 +86,7 @@ export class Executable {
 
     this.dispatchJob(
       selectedJob.id,
-      selectedQueue.callbackUrl,
+      callbackUrl,
       selectedJob.payload
     );
 

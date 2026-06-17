@@ -15,20 +15,12 @@ export const createRun = async (run: db_utils.NewRun) => {
 
 export const updateRun = async (
   runId: string,
-  isActive?: boolean,
-  runTimeStart?: Date,
-  runTimeEnd?: Date
-): SingleRun => {
-  const updatedRunDetails: {
+  updatedRunDetails: {
     isActive?: boolean;
     runTimeStart?: Date;
     runTimeEnd?: Date;
-  } = {};
-
-  if (isActive) updatedRunDetails["isActive"] = isActive;
-  if (runTimeStart) updatedRunDetails["runTimeStart"] = runTimeStart;
-  if (runTimeEnd) updatedRunDetails["runTimeEnd"] = runTimeEnd;
-
+  }
+): SingleRun => {
   const updatedRuns = await db
     .update(db_utils.RunSchema)
     .set(updatedRunDetails)

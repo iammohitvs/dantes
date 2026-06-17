@@ -42,20 +42,12 @@ export const createJob = async (job: db_utils.NewJob): SingleJob => {
 
 export const updateJob = async (
   jobId: string,
-  type?: "SINGLE" | "CRON",
-  status?: "IDLE" | "PENDING" | "SUCCESS" | "FAILURE",
-  queueId?: string
-): SingleJob => {
-  const updatedJobItems: {
+  updatedJobItems: {
     type?: "SINGLE" | "CRON";
     status?: "IDLE" | "PENDING" | "SUCCESS" | "FAILURE";
     queueId?: string;
-  } = {};
-  
-  if (type) updatedJobItems["type"] = type;
-  if (status) updatedJobItems["status"] = status;
-  if (queueId) updatedJobItems["queueId"] = queueId;
-
+  }
+): SingleJob => {
   const updateJobs = await db
     .update(db_utils.JobSchema)
     .set(updatedJobItems)

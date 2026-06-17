@@ -15,23 +15,13 @@ export const createExecution = async (execution: db_utils.NewExecution) => {
 
 export const updateExecution = async (
   executionId: string,
-  jobId?: string,
-  runId?: string,
-  reply?: string,
-  status?: "RUNNING" | "SUCCESS" | "FAILURE"
-): SingleExecution => {
-  const updatedExecutionDetails: {
+  updatedExecutionDetails: {
     jobId?: string;
     runId?: string;
     reply?: string;
     status?: "RUNNING" | "SUCCESS" | "FAILURE";
-  } = {};
-
-  if (jobId) updatedExecutionDetails["jobId"] = jobId;
-  if (runId) updatedExecutionDetails["runId"] = runId;
-  if (reply) updatedExecutionDetails["reply"] = reply;
-  if (status) updatedExecutionDetails["status"] = status;
-
+  }
+): SingleExecution => {
   const updatedExecutions = await db
     .update(db_utils.ExecutionSchema)
     .set(updatedExecutionDetails)
