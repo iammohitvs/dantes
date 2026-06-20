@@ -34,6 +34,19 @@ export const jobRoute = async (fastify: FastifyInstance) => {
     return res.status(200).send({ status: "success", createdJob });
   });
 
+  fastify.post("/add-bulk", async (req, res) => {
+    const newJob: db_utils.NewJob[] = req.body as db_utils.NewJob[];
+
+    const createdJob = await job_utils.createJobBulk(newJob);
+
+    if (!createdJob)
+      res
+        .status(500)
+        .send({ status: "error", message: "Error creating your job" });
+
+    return res.status(200).send({ status: "success", createdJob });
+  });
+
   fastify.delete("/:jobId", async (req, res) => {
     const { jobId } = req.params as { jobId: string };
 

@@ -141,36 +141,36 @@ export class Executable {
     switch (reply.status) {
       case "success":
         // update run -> execution -> job
-        await run_utils.updateRun(replied_running_item.runId, {
-          isActive: false,
-          runTimeEnd,
-        });
-
-        await execution_utils.setExecutionAsSuccessful(
-          replied_running_item.executionId,
-          reply.message
-        );
-
-        await job_utils.setJobAsSuccessful(
-          reply.jobId || replied_running_item.jobId
-        );
+        await Promise.all([
+          run_utils.updateRun(replied_running_item.runId, {
+            isActive: false,
+            runTimeEnd,
+          }),
+          execution_utils.setExecutionAsSuccessful(
+            replied_running_item.executionId,
+            reply.message
+          ),
+          job_utils.setJobAsSuccessful(
+            reply.jobId || replied_running_item.jobId
+          ),
+        ]);
 
         message = "Job set as successful";
         console.log(message);
         return { status: "success", message };
 
       case "error":
-        await run_utils.updateRun(replied_running_item.runId, {
-          isActive: false,
-          runTimeEnd,
-        });
-
-        await execution_utils.setExecutionAsFailed(
-          replied_running_item.executionId,
-          reply.message
-        );
-
-        await job_utils.setJobAsErrored(reply.jobId);
+        await Promise.all([
+          run_utils.updateRun(replied_running_item.runId, {
+            isActive: false,
+            runTimeEnd,
+          }),
+          execution_utils.setExecutionAsFailed(
+            replied_running_item.executionId,
+            reply.message
+          ),
+          job_utils.setJobAsErrored(reply.jobId),
+        ]);
 
         message = "Job errored and recorded";
         console.error(message);

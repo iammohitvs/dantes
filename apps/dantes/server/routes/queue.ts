@@ -8,7 +8,7 @@ export const queueRoute = async (fastify: FastifyInstance) => {
   fastify.post("/", async (req, res) => {
     const queue = req.body as db_utils.NewQueue;
 
-    const createdQueue = queue_utils.createQueue(queue);
+    const createdQueue = await queue_utils.createQueue(queue);
 
     return res.status(200).send({ queue: createdQueue });
   });

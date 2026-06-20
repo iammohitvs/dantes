@@ -40,6 +40,10 @@ export const createJob = async (job: db_utils.NewJob): SingleJob => {
   else return null;
 };
 
+export const createJobBulk = async (jobs: db_utils.NewJob[]): ManyJobs => {
+  return await db.insert(db_utils.JobSchema).values(jobs).returning();
+};
+
 export const updateJob = async (
   jobId: string,
   updatedJobItems: {
