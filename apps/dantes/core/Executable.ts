@@ -5,21 +5,18 @@ import {
   job_utils,
   queue_utils,
   run_utils,
-} from "../../packages-tunnel/db.ts";
-import { addJobResponse, jobReply, onReplyReturnType } from "../types.ts";
-import { apiClient } from "../../utils/apiclient.ts";
-import { Mutex } from "../mutex/index.ts";
+} from "../packages-tunnel/db.ts";
+import { addJobResponse, jobReply, onReplyReturnType } from "./types.ts";
+import { apiClient } from "../utils/apiclient.ts";
+import { Mutex } from "./Mutex.ts";
+import { RunningItem } from "./RunningItem.ts";
 
 export class Executable {
   private MAX_JOB_CONCURRENCY: number = Number(
     process.env.MAX_JOB_CONCURRENCY!
   );
 
-  private running_items: {
-    jobId: string;
-    executionId: string;
-    runId: string;
-  }[] = [];
+  private running_items: RunningItem[] = [];
   public running_items_count: number = this.running_items.length || 0;
 
   private job_selection_mutex: Mutex = new Mutex();
@@ -29,15 +26,13 @@ export class Executable {
   }
 
   dispatchJob(jobId: string, callbackUrl: string, payload: string) {
-    /* const response =  */ apiClient
-      .post(callbackUrl, { jobId, payload })
-      .catch(async (err) => {
-        await this.onReply({
-          jobId,
-          status: "error",
-          message: `Failed at  dispatch: ${err.message}`,
-        });
+    apiClient.post(callbackUrl, { jobId, payload }).catch(async (err) => {
+      await this.onReply({
+        jobId,
+        status: "error",
+        message: `Failed at  dispatch: ${err.message}`,
       });
+    });
   }
 
   public async executeNextJob() {
@@ -60,12 +55,10 @@ export class Executable {
         return;
       }
 
-      const callbackUrl = await queue_utils.getQueueCallbackUrl(
-        selectedJob.queueId
-      );
+      const chosenQueue = await queue_utils.getQueueById(selectedJob.queueId);
 
-      if (!callbackUrl) {
-        console.warn("No callbackUrl for the chosen job");
+      if (!chosenQueue) {
+        console.warn("No queues for the chosen job");
         return;
       }
 
@@ -98,13 +91,20 @@ export class Executable {
 
       await job_utils.setJobAsRunning(selectedJob.id);
 
-      this.dispatchJob(selectedJob.id, callbackUrl, selectedJob.payload);
+      this.dispatchJob(
+        selectedJob.id,
+        chosenQueue.callbackUrl,
+        selectedJob.payload
+      );
 
-      this.running_items.push({
-        jobId: selectedJob.id,
-        executionId: createdExecution.id,
-        runId: createdRun.id,
-      });
+      this.running_items.push(
+        new RunningItem(
+          selectedJob.id,
+          createdExecution.id,
+          createdRun.id,
+          Number(chosenQueue.response_wait_time_ms)
+        )
+      );
       this.running_items_count += 1;
 
       console.log("Job added to the running list: ", selectedJob.id);
@@ -126,21 +126,13 @@ export class Executable {
     }
 
     const runTimeEnd = new Date(Date.now());
-    // reduce running items count and remove that running item
     this.running_items.filter(
       (running_item) => running_item.jobId !== reply.jobId
     );
     this.running_items_count -= 1;
 
-    // update an execution
-    // update a run
-
-    // an execution must fail thrice, then a job is set as errored
-
-    // if the job fails once/twice, then set it to idle before you chose it to run it again
     switch (reply.status) {
       case "success":
-        // update run -> execution -> job
         await Promise.all([
           run_utils.updateRun(replied_running_item.runId, {
             isActive: false,
@@ -166,6 +158,23 @@ export class Executable {
             runTimeEnd,
           }),
           execution_utils.setExecutionAsFailed(
+            replied_running_item.executionId,
+            reply.message
+          ),
+          job_utils.setJobAsErrored(reply.jobId),
+        ]);
+
+        message = "Job errored and recorded";
+        console.error(message);
+        return { status: "error", message };
+
+      case "timed_out":
+        await Promise.all([
+          run_utils.updateRun(replied_running_item.runId, {
+            isActive: false,
+            runTimeEnd,
+          }),
+          execution_utils.setExecutionAsTimedOut(
             replied_running_item.executionId,
             reply.message
           ),

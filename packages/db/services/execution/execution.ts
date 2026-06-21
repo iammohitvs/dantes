@@ -19,7 +19,7 @@ export const updateExecution = async (
     jobId?: string;
     runId?: string;
     reply?: string;
-    status?: "RUNNING" | "SUCCESS" | "FAILURE";
+    status?: "RUNNING" | "SUCCESS" | "FAILURE" | "TIMED-OUT";
   }
 ): SingleExecution => {
   const updatedExecutions = await db
@@ -32,7 +32,7 @@ export const updateExecution = async (
   else return null;
 };
 
-export const setExecutionAsRunnind = async (executionId: string) => {
+export const setExecutionAsRunning = async (executionId: string) => {
   const updatedExecutions = await db
     .update(db_utils.ExecutionSchema)
     .set({ status: "RUNNING" })
@@ -50,6 +50,20 @@ export const setExecutionAsSuccessful = async (
   const updatedExecutions = await db
     .update(db_utils.ExecutionSchema)
     .set({ status: "SUCCESS", reply })
+    .where(eq(db_utils.ExecutionSchema.id, executionId))
+    .returning();
+
+  if (updatedExecutions.length) return updatedExecutions[0];
+  else return null;
+};
+
+export const setExecutionAsTimedOut = async (
+  executionId: string,
+  reply: string
+) => {
+  const updatedExecutions = await db
+    .update(db_utils.ExecutionSchema)
+    .set({ status: "TIMED-OUT", reply })
     .where(eq(db_utils.ExecutionSchema.id, executionId))
     .returning();
 

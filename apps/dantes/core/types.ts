@@ -1,5 +1,5 @@
 export interface jobMethodResponseBase {
-  status: "success" | "error";
+  status: "success" | "error" | "timed_out";
 }
 
 export interface addJobResponse extends jobMethodResponseBase {

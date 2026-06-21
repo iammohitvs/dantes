@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import { db as database } from "./db.ts";
 import * as drizzleOrm from "drizzle-orm";
 

@@ -1,14 +1,10 @@
-import { Executable } from "../executable/index.ts";
+import { Executable } from "./Executable.ts";
 
 export class Loop {
   private wait_time_ms: number;
   private loopId: number | null = null;
   private executable: Executable;
   private params: any[];
-
-  // TODO: create an executable wrapper that makes sure to always check if the
-  // loop is currently being run to find a new job, if it is then we dont want
-  // it to run again. Use a state to keep track of this (mutex)
 
   constructor(
     executable: Executable,
