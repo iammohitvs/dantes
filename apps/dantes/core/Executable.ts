@@ -17,9 +17,8 @@ import { Mutex } from "./Mutex.ts";
 import { RunningItem } from "./RunningItem.ts";
 
 export class Executable {
-  private MAX_JOB_CONCURRENCY: number = Number(
-    process.env.MAX_JOB_CONCURRENCY!
-  );
+  private MAX_JOB_CONCURRENCY: number =
+    Number(process.env.MAX_JOB_CONCURRENCY) || 5;
 
   private running_items: RunningItem[] = [];
   public running_items_count: number = this.running_items.length || 0;
@@ -242,6 +241,7 @@ export class Executable {
     }
 
     const runTimeEnd = new Date(Date.now());
+    replied_running_item.clearRunningItemTimeout();
     this.running_items = this.running_items.filter(
       (running_item) => running_item.runId !== reply.runId
     );

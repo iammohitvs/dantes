@@ -32,4 +32,8 @@ export class RunningItem {
       });
     }, this.reply_waiting_time);
   }
+
+  public clearRunningItemTimeout() {
+    clearTimeout(this.reply_waiting_timer as NodeJS.Timeout);
+  }
 }
