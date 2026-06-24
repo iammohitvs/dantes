@@ -21,6 +21,7 @@ export const JobSchema = sqliteTable("job", {
   next_execution: integer({ mode: "timestamp" }),
   last_execution: integer({ mode: "timestamp" }),
   execution_recall: text({ mode: "json" }).$type<ExecutionRecall>(),
+  current_retry_count: integer().default(0).notNull(),
 
   ...timestamps,
 

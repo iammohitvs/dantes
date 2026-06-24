@@ -6,7 +6,12 @@ import {
   queue_utils,
   run_utils,
 } from "../packages-tunnel/db.ts";
-import { addJobResponse, jobReply, onReplyReturnType } from "./types.ts";
+import {
+  addJobResponse,
+  findRunningItem,
+  jobReply,
+  onReplyReturnType,
+} from "./types.ts";
 import { apiClient } from "../utils/apiclient.ts";
 import { Mutex } from "./Mutex.ts";
 import { RunningItem } from "./RunningItem.ts";
@@ -25,14 +30,124 @@ export class Executable {
     console.log("Executable created!");
   }
 
-  dispatchJob(jobId: string, callbackUrl: string, payload: string) {
-    apiClient.post(callbackUrl, { jobId, payload }).catch(async (err) => {
+  findRunningItem({
+    jobId,
+    executionId,
+    runId,
+  }: findRunningItem): RunningItem | null {
+    let found_running_item: RunningItem | null = null;
+
+    if (jobId) {
+      found_running_item =
+        this.running_items.find(
+          (running_item) => running_item.jobId == jobId
+        ) || null;
+      if (found_running_item) return found_running_item;
+    }
+
+    if (executionId) {
+      found_running_item =
+        this.running_items.find(
+          (running_item) => running_item.executionId == executionId
+        ) || null;
+      if (found_running_item) return found_running_item;
+    }
+
+    if (runId) {
+      found_running_item =
+        this.running_items.find(
+          (running_item) => running_item.runId == runId
+        ) || null;
+      if (found_running_item) return found_running_item;
+    }
+
+    return null;
+  }
+
+  dispatchJob(
+    jobId: string,
+    runId: string,
+    callbackUrl: string,
+    payload: string
+  ): void {
+    apiClient.post(callbackUrl, { runId, payload }).catch(async (err) => {
       await this.onReply({
         jobId,
+        runId,
         status: "error",
         message: `Failed at  dispatch: ${err.message}`,
       });
     });
+  }
+
+  async initiateRetryJob(jobId: string): Promise<void> {
+    const chosenJob = await job_utils.getJobByJobId(jobId);
+    if (!chosenJob) {
+      console.error("Inside initiateRetry: No job for with this jobId");
+      return;
+    }
+    const chosenQueue = await queue_utils.getQueueById(chosenJob.queueId);
+    if (!chosenQueue) {
+      console.error("Inside initiateRetry: No queue for with this jobId");
+      return;
+    }
+
+    if (chosenJob.current_retry_count >= chosenQueue.retry_count) {
+      console.error("Reached max retry count for the Queue");
+      await job_utils.setJobAsErrored(jobId);
+      return;
+    }
+
+    console.log(`Retrying job: ${jobId}`);
+
+    const createdExecution = await execution_utils.createExecution({
+      jobId,
+      status: "RUNNING",
+    });
+
+    if (!createdExecution) {
+      console.warn(
+        "Error creating a execution instance for this job execution"
+      );
+      return;
+    }
+
+    const runTimeStart = new Date(Date.now());
+    const createdRun = await run_utils.createRun({
+      executionId: createdExecution.id,
+      runTimeStart,
+    });
+
+    if (!createdRun) {
+      console.warn("Error creating a run instance for this job execution");
+      return;
+    }
+
+    await execution_utils.updateExecution(createdExecution.id, {
+      runId: createdRun.id,
+    });
+
+    await Promise.all([
+      job_utils.setJobAsRunning(jobId),
+      job_utils.updateJobRetryCountByOne(jobId),
+    ]);
+
+    this.dispatchJob(
+      jobId,
+      createdRun.id,
+      chosenQueue.callbackUrl,
+      chosenJob.payload
+    );
+
+    this.running_items.push(
+      new RunningItem(
+        jobId,
+        createdExecution.id,
+        createdRun.id,
+        Number(chosenQueue.response_wait_time_ms)
+      )
+    );
+    this.running_items_count += 1;
   }
 
   public async executeNextJob() {
@@ -93,6 +208,7 @@ export class Executable {
 
       this.dispatchJob(
         selectedJob.id,
+        createdRun.id,
         chosenQueue.callbackUrl,
         selectedJob.payload
       );
@@ -117,7 +233,7 @@ export class Executable {
     let message: string = "";
 
     const replied_running_item = this.running_items.find(
-      (running_item) => running_item.jobId == reply.jobId
+      (running_item) => running_item.runId == reply.runId
     );
 
     if (!replied_running_item) {
@@ -126,8 +242,8 @@ export class Executable {
     }
 
     const runTimeEnd = new Date(Date.now());
-    this.running_items.filter(
-      (running_item) => running_item.jobId !== reply.jobId
+    this.running_items = this.running_items.filter(
+      (running_item) => running_item.runId !== reply.runId
     );
     this.running_items_count -= 1;
 
@@ -161,11 +277,13 @@ export class Executable {
             replied_running_item.executionId,
             reply.message
           ),
-          job_utils.setJobAsErrored(reply.jobId),
         ]);
 
         message = "Job errored and recorded";
         console.error(message);
+
+        await this.initiateRetryJob(reply.jobId);
+
         return { status: "error", message };
 
       case "timed_out":
@@ -178,12 +296,14 @@ export class Executable {
             replied_running_item.executionId,
             reply.message
           ),
-          job_utils.setJobAsErrored(reply.jobId),
         ]);
 
-        message = "Job errored and recorded";
+        message = "Job timed out and recorded";
         console.error(message);
-        return { status: "error", message };
+
+        await this.initiateRetryJob(reply.jobId);
+
+        return { status: "timed_out", message };
 
       default:
         message = "Reply neither 'success' nor 'error'";

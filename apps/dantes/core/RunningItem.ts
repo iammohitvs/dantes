@@ -9,6 +9,7 @@ export class RunningItem {
   public runId: string;
 
   public reply_waiting_timer: NodeJS.Timeout | null = null;
+  public reply_waiting_time: number = Number(default_reply_wait_time);
 
   constructor(
     jobId: string,
@@ -20,12 +21,15 @@ export class RunningItem {
     this.executionId = executionId;
     this.runId = runId;
 
+    if (replyWaitingTime) this.reply_waiting_time = replyWaitingTime;
+
     this.reply_waiting_timer = setTimeout(async () => {
       await executable.onReply({
         jobId: this.jobId as string,
+        runId: this.runId as string,
         message: "Reply Timed out",
         status: "timed_out",
       });
-    }, Number(replyWaitingTime || default_reply_wait_time));
+    }, this.reply_waiting_time);
   }
 }

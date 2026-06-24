@@ -126,3 +126,21 @@ export const setJobAsIdle = async (jobId: string): SingleJob => {
   if (selectedJobs.length) return selectedJobs[0];
   else return null;
 };
+
+export const updateJobRetryCountByOne = async (jobId: string): SingleJob => {
+  const fetchedJobs = await db
+    .select()
+    .from(db_utils.JobSchema)
+    .where(eq(db_utils.JobSchema.id, jobId));
+
+  if (!fetchedJobs.length) return null;
+
+  const updatedJobs = await db
+    .update(db_utils.JobSchema)
+    .set({ current_retry_count: fetchedJobs[0].current_retry_count + 1 })
+    .where(eq(db_utils.JobSchema.id, jobId))
+    .returning();
+
+  if (updatedJobs.length) return updatedJobs[0];
+  else return null;
+};

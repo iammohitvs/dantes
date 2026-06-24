@@ -7,10 +7,17 @@ export interface addJobResponse extends jobMethodResponseBase {
 }
 
 export interface jobReply extends jobMethodResponseBase {
-  message: string;
   jobId: string;
+  runId: string;
+  message: string;
 }
 
 export interface onReplyReturnType extends jobMethodResponseBase {
   message: string;
+}
+
+export interface findRunningItem {
+  jobId?: string;
+  executionId?: string;
+  runId?: string;
 }
