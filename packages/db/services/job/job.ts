@@ -1,13 +1,22 @@
 import { db } from "../../db.ts";
 import * as db_utils from "../../schemas/index.ts";
-import { ManyJobs, SingleJob } from "./types.ts";
+import {
+  ManyJobs,
+  SingleJob,
+  SingleJobWithQueue,
+  ManyJobsWithQueue,
+} from "./types.ts";
 import { and, eq } from "drizzle-orm";
 
-export const getJobByJobId = async (jobId: string): SingleJob => {
-  const foundJobs = await db
+export const getJobByJobId = async (jobId: string): SingleJobWithQueue => {
+  let foundJobs = await db
     .select()
     .from(db_utils.JobSchema)
-    .where(eq(db_utils.JobSchema.id, jobId));
+    .where(eq(db_utils.JobSchema.id, jobId))
+    .leftJoin(
+      db_utils.QueueSchema,
+      eq(db_utils.JobSchema.id, db_utils.QueueSchema.id)
+    );
 
   if (foundJobs.length) return foundJobs[0];
   else return null;
@@ -17,7 +26,7 @@ export const getJobs = async (
   type?: "SINGLE" | "CRON",
   status?: "IDLE" | "PENDING" | "SUCCESS" | "FAILURE",
   queueId?: string
-): ManyJobs => {
+): ManyJobsWithQueue => {
   return await db
     .select()
     .from(db_utils.JobSchema)
@@ -27,6 +36,10 @@ export const getJobs = async (
         status ? eq(db_utils.JobSchema.status, status) : undefined,
         queueId ? eq(db_utils.JobSchema.queueId, queueId) : undefined
       )
+    )
+    .leftJoin(
+      db_utils.QueueSchema,
+      eq(db_utils.JobSchema.id, db_utils.QueueSchema.id)
     );
 };
 
@@ -72,11 +85,15 @@ export const deleteJob = async (jobId: string): SingleJob => {
   else return null;
 };
 
-export const pickNextJobToExecute = async (): SingleJob => {
+export const pickNextJobToExecute = async (): SingleJobWithQueue => {
   const chosenJobs = await db
     .select()
     .from(db_utils.JobSchema)
     .where(eq(db_utils.JobSchema.status, "IDLE"))
+    .leftJoin(
+      db_utils.QueueSchema,
+      eq(db_utils.JobSchema.id, db_utils.QueueSchema.id)
+    )
     .orderBy(db_utils.JobSchema.createdAt);
 
   if (chosenJobs.length) return chosenJobs[0];

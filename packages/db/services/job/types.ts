@@ -4,6 +4,18 @@ export type ManyJobs = Promise<db_utils.Job[]>;
 
 export type SingleJob = Promise<db_utils.Job | null>;
 
+export type SingleJobWithQueue = Promise<{
+  job: db_utils.Job;
+  queue: db_utils.Queue | null;
+} | null>;
+
+export type ManyJobsWithQueue = Promise<
+  | {
+      job: db_utils.Job;
+      queue: db_utils.Queue | null;
+    }[]
+>;
+
 export type JobStatus = "IDLE" | "PENDING" | "SUCCESS" | "FAILURE";
 export type JobTypeType = "SINGLE" | "CRON";
 

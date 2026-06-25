@@ -73,14 +73,12 @@ export class Executable {
       return;
     }
 
-    const selectedQueue = await queue_utils.getQueueById(selectedJob.queueId);
-
-    if (!selectedQueue) {
+    if (!selectedJob.queue) {
       console.warn("No queue found to update the retry count");
       return;
     }
 
-    if (selectedJob.current_retry_count >= selectedQueue.retry_count) {
+    if (selectedJob.job.current_retry_count >= selectedJob.queue.retry_count) {
       console.error("Reached max retry count for the job in this queue");
       await job_utils.setJobAsFailed(jobId);
       return;
@@ -118,25 +116,21 @@ export class Executable {
 
     await this.job_selection_mutex.activate();
 
-    let selectedJob: null | db_utils.Job = null;
-
     try {
-      selectedJob = await job_utils.pickNextJobToExecute();
+      const selectedJob = await job_utils.pickNextJobToExecute();
 
       if (!selectedJob) {
         console.warn("No IDLE jobs available");
         return;
       }
 
-      const chosenQueue = await queue_utils.getQueueById(selectedJob.queueId);
-
-      if (!chosenQueue) {
+      if (!selectedJob.queue) {
         console.warn("No queues for the chosen job");
         return;
       }
 
       const createdExecution = await execution_utils.createExecution({
-        jobId: selectedJob.id,
+        jobId: selectedJob.job.id,
         status: "RUNNING",
       });
 
@@ -162,26 +156,26 @@ export class Executable {
         runId: createdRun.id,
       });
 
-      await job_utils.setJobAsRunning(selectedJob.id);
+      await job_utils.setJobAsRunning(selectedJob.job.id);
 
       this.dispatchJob(
-        selectedJob.id,
+        selectedJob.job.id,
         createdRun.id,
-        chosenQueue.callbackUrl,
-        selectedJob.payload
+        selectedJob.queue.callbackUrl,
+        selectedJob.job.payload
       );
 
       this.running_items.push(
         new RunningItem(
-          selectedJob.id,
+          selectedJob.job.id,
           createdExecution.id,
           createdRun.id,
-          Number(chosenQueue.response_wait_time_ms)
+          Number(selectedJob.queue.response_wait_time_ms)
         )
       );
       this.running_items_count += 1;
 
-      console.log("Job added to the running list: ", selectedJob.id);
+      console.log("Job added to the running list: ", selectedJob.job.id);
     } finally {
       this.job_selection_mutex.deactivate();
     }
