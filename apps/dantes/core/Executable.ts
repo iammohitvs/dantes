@@ -8,10 +8,9 @@ import {
   run_utils,
 } from "../packages-tunnel/db.ts";
 import {
-  addJobResponse,
-  findRunningItemInputType,
-  jobReply,
-  onReplyReturnType,
+  FindRunningItemInputType,
+  JobReplyExecutable,
+  OnReplyReturnType,
 } from "./types.ts";
 import { apiClient } from "../utils/apiclient.ts";
 import { Mutex } from "./Mutex.ts";
@@ -34,13 +33,13 @@ export class Executable {
     jobId,
     executionId,
     runId,
-  }: findRunningItemInputType): RunningItem | null {
+  }: FindRunningItemInputType): RunningItem | null {
     let found_running_item: RunningItem | null = null;
 
     if (jobId) {
       found_running_item =
         this.running_items.find(
-          (running_item) => running_item.jobId == jobId
+          (running_item) => running_item.jobId === jobId
         ) || null;
       if (found_running_item) return found_running_item;
     }
@@ -48,7 +47,7 @@ export class Executable {
     if (executionId) {
       found_running_item =
         this.running_items.find(
-          (running_item) => running_item.executionId == executionId
+          (running_item) => running_item.executionId === executionId
         ) || null;
       if (found_running_item) return found_running_item;
     }
@@ -56,7 +55,7 @@ export class Executable {
     if (runId) {
       found_running_item =
         this.running_items.find(
-          (running_item) => running_item.runId == runId
+          (running_item) => running_item.runId === runId
         ) || null;
       if (found_running_item) return found_running_item;
     }
@@ -188,7 +187,7 @@ export class Executable {
     console.log("Job added to the running list: ", selectedJob.job.id);
   }
 
-  public async onReply(reply: jobReply): Promise<onReplyReturnType> {
+  public async onReply(reply: JobReplyExecutable): Promise<OnReplyReturnType> {
     let message: string = "";
 
     const replied_running_item = this.findRunningItem({ runId: reply.runId });

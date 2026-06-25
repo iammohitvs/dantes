@@ -1,22 +1,22 @@
-export interface jobMethodResponseBase {
+export interface JobMethodResponseBase {
   status: "success" | "error" | "timed_out";
 }
 
-export interface addJobResponse extends jobMethodResponseBase {
+export interface AddJobResponse extends JobMethodResponseBase {
   message: string;
 }
 
-export interface jobReply extends jobMethodResponseBase {
+export interface JobReplyExecutable extends JobMethodResponseBase {
   jobId: string;
   runId: string;
   message: string;
 }
 
-export interface onReplyReturnType extends jobMethodResponseBase {
+export interface OnReplyReturnType extends JobMethodResponseBase {
   message: string;
 }
 
-export interface findRunningItemInputType {
+export interface FindRunningItemInputType {
   jobId?: string;
   executionId?: string;
   runId?: string;
