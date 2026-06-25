@@ -8,7 +8,7 @@ import {
 } from "../packages-tunnel/db.ts";
 import {
   addJobResponse,
-  findRunningItem,
+  findRunningItemInputType,
   jobReply,
   onReplyReturnType,
 } from "./types.ts";
@@ -29,11 +29,11 @@ export class Executable {
     console.log("Executable created!");
   }
 
-  findRunningItem({
+  public findRunningItem({
     jobId,
     executionId,
     runId,
-  }: findRunningItem): RunningItem | null {
+  }: findRunningItemInputType): RunningItem | null {
     let found_running_item: RunningItem | null = null;
 
     if (jobId) {
@@ -63,6 +63,33 @@ export class Executable {
     return null;
   }
 
+  private async updateJobRetryCountOrSetAsErrored(jobId: string): Promise<void> {
+    const selectedJob = await job_utils.getJobByJobId(jobId);
+
+    if (!selectedJob) {
+      console.warn("No job found to update the retry count");
+      return;
+    }
+
+    const selectedQueue = await queue_utils.getQueueById(selectedJob.queueId);
+
+    if (!selectedQueue) {
+      console.warn("No queue found to update the retry count");
+      return;
+    }
+
+    if (selectedJob.current_retry_count >= selectedQueue.retry_count) {
+      console.error("Reached max retry count for the job in this queue");
+      await job_utils.setJobAsErrored(jobId);
+      return;
+    }
+
+    await Promise.all([
+      job_utils.updateJobRetryCountByOne(jobId),
+      job_utils.setJobAsIdle(jobId),
+    ]);
+  }
+
   dispatchJob(
     jobId: string,
     runId: string,
@@ -79,77 +106,7 @@ export class Executable {
     });
   }
 
-  async initiateRetryJob(jobId: string): Promise<void> {
-    const chosenJob = await job_utils.getJobByJobId(jobId);
-    if (!chosenJob) {
-      console.error("Inside initiateRetry: No job for with this jobId");
-      return;
-    }
-    const chosenQueue = await queue_utils.getQueueById(chosenJob.queueId);
-    if (!chosenQueue) {
-      console.error("Inside initiateRetry: No queue for with this jobId");
-      return;
-    }
-
-    if (chosenJob.current_retry_count >= chosenQueue.retry_count) {
-      console.error("Reached max retry count for the Queue");
-      await job_utils.setJobAsErrored(jobId);
-      return;
-    }
-
-    console.log(`Retrying job: ${jobId}`);
-
-    const createdExecution = await execution_utils.createExecution({
-      jobId,
-      status: "RUNNING",
-    });
-
-    if (!createdExecution) {
-      console.warn(
-        "Error creating a execution instance for this job execution"
-      );
-      return;
-    }
-
-    const runTimeStart = new Date(Date.now());
-    const createdRun = await run_utils.createRun({
-      executionId: createdExecution.id,
-      runTimeStart,
-    });
-
-    if (!createdRun) {
-      console.warn("Error creating a run instance for this job execution");
-      return;
-    }
-
-    await execution_utils.updateExecution(createdExecution.id, {
-      runId: createdRun.id,
-    });
-
-    await Promise.all([
-      job_utils.setJobAsRunning(jobId),
-      job_utils.updateJobRetryCountByOne(jobId),
-    ]);
-
-    this.dispatchJob(
-      jobId,
-      createdRun.id,
-      chosenQueue.callbackUrl,
-      chosenJob.payload
-    );
-
-    this.running_items.push(
-      new RunningItem(
-        jobId,
-        createdExecution.id,
-        createdRun.id,
-        Number(chosenQueue.response_wait_time_ms)
-      )
-    );
-    this.running_items_count += 1;
-  }
-
-  public async executeNextJob() {
+  public async executeNextJob(): Promise<void> {
     if (this.running_items_count >= this.MAX_JOB_CONCURRENCY) {
       console.warn(
         `${this.MAX_JOB_CONCURRENCY}(Maximum deinfed concurrency) jobs already running in parallel`
@@ -231,21 +188,20 @@ export class Executable {
   public async onReply(reply: jobReply): Promise<onReplyReturnType> {
     let message: string = "";
 
-    const replied_running_item = this.running_items.find(
-      (running_item) => running_item.runId == reply.runId
-    );
+    const replied_running_item = this.findRunningItem({ runId: reply.runId });
 
     if (!replied_running_item) {
       message = "Running Item not found";
       return { status: "error", message };
     }
 
-    const runTimeEnd = new Date(Date.now());
     replied_running_item.clearRunningItemTimeout();
     this.running_items = this.running_items.filter(
       (running_item) => running_item.runId !== reply.runId
     );
     this.running_items_count -= 1;
+
+    const runTimeEnd = new Date(Date.now());
 
     switch (reply.status) {
       case "success":
@@ -282,7 +238,9 @@ export class Executable {
         message = "Job errored and recorded";
         console.error(message);
 
-        await this.initiateRetryJob(reply.jobId);
+        await this.updateJobRetryCountOrSetAsErrored(
+          reply.jobId || replied_running_item.jobId
+        );
 
         return { status: "error", message };
 
@@ -301,7 +259,9 @@ export class Executable {
         message = "Job timed out and recorded";
         console.error(message);
 
-        await this.initiateRetryJob(reply.jobId);
+        await this.updateJobRetryCountOrSetAsErrored(
+          reply.jobId || replied_running_item.jobId
+        );
 
         return { status: "timed_out", message };
 

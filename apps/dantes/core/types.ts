@@ -16,7 +16,7 @@ export interface onReplyReturnType extends jobMethodResponseBase {
   message: string;
 }
 
-export interface findRunningItem {
+export interface findRunningItemInputType {
   jobId?: string;
   executionId?: string;
   runId?: string;
