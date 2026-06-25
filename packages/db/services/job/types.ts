@@ -4,12 +4,22 @@ export type ManyJobs = Promise<db_utils.Job[]>;
 
 export type SingleJob = Promise<db_utils.Job | null>;
 
-export type SingleJobWithQueue = Promise<{
+export type SingleJobWithQueue = {
+  job: db_utils.Job;
+  queue: db_utils.Queue | null;
+} | null;
+
+export type ManyJobsWithQueue = {
+  job: db_utils.Job;
+  queue: db_utils.Queue | null;
+}[];
+
+export type ReturnSingleJobWithQueue = Promise<{
   job: db_utils.Job;
   queue: db_utils.Queue | null;
 } | null>;
 
-export type ManyJobsWithQueue = Promise<
+export type ReturnManyJobsWithQueue = Promise<
   | {
       job: db_utils.Job;
       queue: db_utils.Queue | null;

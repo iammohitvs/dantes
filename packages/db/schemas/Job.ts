@@ -15,7 +15,15 @@ export const JobSchema = sqliteTable("job", {
   type: text({ enum: ["SINGLE", "CRON"] })
     .default("SINGLE")
     .notNull(),
-  status: text({ enum: ["IDLE", "PENDING", "SUCCESS", "FAILURE"] })
+  status: text({
+    enum: [
+      "IDLE",
+      "PENDING",
+      "SUCCESS",
+      "FAILURE",
+      "ERRORED-OUT",
+    ],
+  })
     .default("IDLE")
     .notNull(),
   next_execution: integer({ mode: "timestamp" }),

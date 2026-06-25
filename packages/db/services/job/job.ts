@@ -3,19 +3,21 @@ import * as db_utils from "../../schemas/index.ts";
 import {
   ManyJobs,
   SingleJob,
-  SingleJobWithQueue,
-  ManyJobsWithQueue,
+  ReturnSingleJobWithQueue,
+  ReturnManyJobsWithQueue,
 } from "./types.ts";
 import { and, eq } from "drizzle-orm";
 
-export const getJobByJobId = async (jobId: string): SingleJobWithQueue => {
+export const getJobByJobId = async (
+  jobId: string
+): ReturnSingleJobWithQueue => {
   let foundJobs = await db
     .select()
     .from(db_utils.JobSchema)
     .where(eq(db_utils.JobSchema.id, jobId))
     .leftJoin(
       db_utils.QueueSchema,
-      eq(db_utils.JobSchema.id, db_utils.QueueSchema.id)
+      eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
     );
 
   if (foundJobs.length) return foundJobs[0];
@@ -26,7 +28,7 @@ export const getJobs = async (
   type?: "SINGLE" | "CRON",
   status?: "IDLE" | "PENDING" | "SUCCESS" | "FAILURE",
   queueId?: string
-): ManyJobsWithQueue => {
+): ReturnManyJobsWithQueue => {
   return await db
     .select()
     .from(db_utils.JobSchema)
@@ -39,7 +41,7 @@ export const getJobs = async (
     )
     .leftJoin(
       db_utils.QueueSchema,
-      eq(db_utils.JobSchema.id, db_utils.QueueSchema.id)
+      eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
     );
 };
 
@@ -85,14 +87,14 @@ export const deleteJob = async (jobId: string): SingleJob => {
   else return null;
 };
 
-export const pickNextJobToExecute = async (): SingleJobWithQueue => {
+export const pickNextJobToExecute = async (): ReturnSingleJobWithQueue => {
   const chosenJobs = await db
     .select()
     .from(db_utils.JobSchema)
     .where(eq(db_utils.JobSchema.status, "IDLE"))
     .leftJoin(
       db_utils.QueueSchema,
-      eq(db_utils.JobSchema.id, db_utils.QueueSchema.id)
+      eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
     )
     .orderBy(db_utils.JobSchema.createdAt);
 
@@ -126,6 +128,17 @@ export const setJobAsFailed = async (jobId: string): SingleJob => {
   const selectedJobs = await db
     .update(db_utils.JobSchema)
     .set({ status: "FAILURE" })
+    .where(eq(db_utils.JobSchema.id, jobId))
+    .returning();
+
+  if (selectedJobs.length) return selectedJobs[0];
+  else return null;
+};
+
+export const setJobAsErrored = async (jobId: string): SingleJob => {
+  const selectedJobs = await db
+    .update(db_utils.JobSchema)
+    .set({ status: "ERRORED-OUT" })
     .where(eq(db_utils.JobSchema.id, jobId))
     .returning();
 

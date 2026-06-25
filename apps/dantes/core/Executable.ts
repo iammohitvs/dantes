@@ -2,6 +2,7 @@ import {
   db,
   db_utils,
   execution_utils,
+  job_types,
   job_utils,
   queue_utils,
   run_utils,
@@ -116,8 +117,10 @@ export class Executable {
 
     await this.job_selection_mutex.activate();
 
+    let selectedJob: job_types.SingleJobWithQueue | null = null;
+
     try {
-      const selectedJob = await job_utils.pickNextJobToExecute();
+      selectedJob = await job_utils.pickNextJobToExecute();
 
       if (!selectedJob) {
         console.warn("No IDLE jobs available");
@@ -126,59 +129,64 @@ export class Executable {
 
       if (!selectedJob.queue) {
         console.warn("No queues for the chosen job");
+        await job_utils.setJobAsErrored(selectedJob.job.id);
         return;
       }
-
-      const createdExecution = await execution_utils.createExecution({
-        jobId: selectedJob.job.id,
-        status: "RUNNING",
-      });
-
-      if (!createdExecution) {
-        console.warn(
-          "Error creating a execution instance for this job execution"
-        );
-        return;
-      }
-
-      const runTimeStart = new Date(Date.now());
-      const createdRun = await run_utils.createRun({
-        executionId: createdExecution.id,
-        runTimeStart,
-      });
-
-      if (!createdRun) {
-        console.warn("Error creating a run instance for this job execution");
-        return;
-      }
-
-      await execution_utils.updateExecution(createdExecution.id, {
-        runId: createdRun.id,
-      });
-
-      await job_utils.setJobAsRunning(selectedJob.job.id);
-
-      this.dispatchJob(
-        selectedJob.job.id,
-        createdRun.id,
-        selectedJob.queue.callbackUrl,
-        selectedJob.job.payload
-      );
-
-      this.running_items.push(
-        new RunningItem(
-          selectedJob.job.id,
-          createdExecution.id,
-          createdRun.id,
-          Number(selectedJob.queue.response_wait_time_ms)
-        )
-      );
-      this.running_items_count += 1;
-
-      console.log("Job added to the running list: ", selectedJob.job.id);
     } finally {
       this.job_selection_mutex.deactivate();
     }
+
+    const createdExecution = await execution_utils.createExecution({
+      jobId: selectedJob.job.id,
+      status: "RUNNING",
+    });
+
+    if (!createdExecution) {
+      console.warn(
+        "Error creating a execution instance for this job execution"
+      );
+      return;
+    }
+
+    const runTimeStart = new Date(Date.now());
+    const createdRun = await run_utils.createRun({
+      executionId: createdExecution.id,
+      runTimeStart,
+    });
+
+    if (!createdRun) {
+      console.warn("Error creating a run instance for this job execution");
+      await execution_utils.setExecutionAsFailed(
+        createdExecution.id,
+        `Failed becuase Run creation failed`
+      );
+      return;
+    }
+
+    await execution_utils.updateExecution(createdExecution.id, {
+      runId: createdRun.id,
+    });
+
+    await job_utils.setJobAsRunning(selectedJob.job.id);
+
+    this.dispatchJob(
+      selectedJob.job.id,
+      createdRun.id,
+      selectedJob.queue.callbackUrl,
+      selectedJob.job.payload
+    );
+
+    this.running_items.push(
+      new RunningItem(
+        selectedJob.job.id,
+        createdExecution.id,
+        createdRun.id,
+        Number(selectedJob.queue.response_wait_time_ms)
+      )
+    );
+    this.running_items_count += 1;
+
+    console.log("Job added to the running list: ", selectedJob.job.id);
   }
 
   public async onReply(reply: jobReply): Promise<onReplyReturnType> {
