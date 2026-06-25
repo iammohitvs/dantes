@@ -6,6 +6,8 @@ export class Loop {
   private executable: Executable;
   private params: any[];
 
+  public isExecuting: boolean = false;
+
   constructor(
     executable: Executable,
     wait_time_ms: number = 500,
@@ -16,9 +18,20 @@ export class Loop {
     this.params = params;
   }
 
+  public async executionCore() {
+    if (this.isExecuting) return;
+
+    this.isExecuting = true;
+    try {
+      await this.executable.executeNextJob();
+    } finally {
+      this.isExecuting = false;
+    }
+  }
+
   public startLoop() {
     this.loopId = setInterval(
-      this.executable.executeNextJob.bind(this.executable),
+      () => this.executionCore(),
       this.wait_time_ms,
       ...this.params
     );
