@@ -105,7 +105,7 @@ export const setJobAsSuccessful = async (jobId: string): SingleJob => {
   else return null;
 };
 
-export const setJobAsErrored = async (jobId: string): SingleJob => {
+export const setJobAsFailed = async (jobId: string): SingleJob => {
   const selectedJobs = await db
     .update(db_utils.JobSchema)
     .set({ status: "FAILURE" })

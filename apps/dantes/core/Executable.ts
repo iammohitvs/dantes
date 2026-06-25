@@ -63,7 +63,9 @@ export class Executable {
     return null;
   }
 
-  private async updateJobRetryCountOrSetAsErrored(jobId: string): Promise<void> {
+  private async updateJobRetryCountOrSetAsErrored(
+    jobId: string
+  ): Promise<void> {
     const selectedJob = await job_utils.getJobByJobId(jobId);
 
     if (!selectedJob) {
@@ -80,7 +82,7 @@ export class Executable {
 
     if (selectedJob.current_retry_count >= selectedQueue.retry_count) {
       console.error("Reached max retry count for the job in this queue");
-      await job_utils.setJobAsErrored(jobId);
+      await job_utils.setJobAsFailed(jobId);
       return;
     }
 
