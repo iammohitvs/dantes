@@ -78,7 +78,7 @@ export class Executable {
       return;
     }
 
-    if (selectedJob.job.current_retry_count >= selectedJob.queue.retry_count) {
+    if (selectedJob.job.currentRetryCount >= selectedJob.queue.retryCount) {
       console.error("Reached max retry count for the job in this queue");
       await job_utils.setJobAsFailed(jobId);
       return;
@@ -159,11 +159,13 @@ export class Executable {
         return;
       }
 
-      await execution_utils.updateExecution(createdExecution.id, {
-        runId: createdRun.id,
-      });
-
-      await job_utils.setJobAsRunning(selectedJob.job.id);
+      await Promise.all([
+        execution_utils.updateExecution(createdExecution.id, {
+          runId: createdRun.id,
+        }),
+        job_utils.setJobAsRunning(selectedJob.job.id),
+        job_utils.updateJobLastExecution(selectedJob.job.id),
+      ]);
 
       this.dispatchJob(
         selectedJob.job.id,
@@ -177,7 +179,7 @@ export class Executable {
           selectedJob.job.id,
           createdExecution.id,
           createdRun.id,
-          Number(selectedJob.queue.response_wait_time_ms)
+          Number(selectedJob.queue.responseWaitTimeMs)
         )
       );
       this.running_items_count += 1;

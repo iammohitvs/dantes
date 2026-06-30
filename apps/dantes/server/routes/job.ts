@@ -7,7 +7,9 @@ export const jobRoute = async (fastify: FastifyInstance) => {
 
     const jobs = await job_utils.getJobs(type, status, queueId);
 
-    return res.code(200).send({ status: "success", jobs, jobsCount: jobs.length });
+    return res
+      .code(200)
+      .send({ status: "success", jobs, jobsCount: jobs.length });
   });
 
   fastify.get("/:jobId", async (req, res) => {
@@ -22,7 +24,20 @@ export const jobRoute = async (fastify: FastifyInstance) => {
   });
 
   fastify.post("/", async (req, res) => {
-    const newJob: db_utils.NewJob = req.body as db_utils.NewJob;
+    const newJobReceived: Record<string, string> = req.body as Record<
+      string,
+      string
+    >;
+
+    const newJob = {
+      ...newJobReceived,
+      nextExecution: newJobReceived.nextExecution
+        ? new Date(newJobReceived.nextExecution)
+        : null,
+      lastExecution: newJobReceived.lastExecution
+        ? new Date(newJobReceived.lastExecution)
+        : null,
+    } as db_utils.NewJob;
 
     const createdJob = await job_utils.createJob(newJob);
 

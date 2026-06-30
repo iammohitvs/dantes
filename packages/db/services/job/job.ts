@@ -6,7 +6,7 @@ import {
   ReturnSingleJobWithQueue,
   ReturnManyJobsWithQueue,
 } from "./types.ts";
-import { and, eq } from "drizzle-orm";
+import { and, eq, lte, isNotNull } from "drizzle-orm";
 
 export const getJobByJobId = async (
   jobId: string
@@ -88,17 +88,37 @@ export const deleteJob = async (jobId: string): SingleJob => {
 };
 
 export const pickNextJobToExecute = async (): ReturnSingleJobWithQueue => {
-  const chosenJobs = await db
-    .select()
-    .from(db_utils.JobSchema)
-    .where(eq(db_utils.JobSchema.status, "IDLE"))
-    .leftJoin(
-      db_utils.QueueSchema,
-      eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
-    )
-    .orderBy(db_utils.JobSchema.createdAt);
+  const currentTimestamp: Date = new Date(Date.now());
 
-  if (chosenJobs.length) return chosenJobs[0];
+  const [chosenScheduledJobs, chosenUnscheduledJobs] = await Promise.all([
+    db
+      .select()
+      .from(db_utils.JobSchema)
+      .where(
+        and(
+          eq(db_utils.JobSchema.status, "IDLE"),
+          isNotNull(db_utils.JobSchema.nextExecution),
+          lte(db_utils.JobSchema.nextExecution, currentTimestamp)
+        )
+      )
+      .leftJoin(
+        db_utils.QueueSchema,
+        eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
+      )
+      .orderBy(db_utils.JobSchema.nextExecution),
+    db
+      .select()
+      .from(db_utils.JobSchema)
+      .where(eq(db_utils.JobSchema.status, "IDLE"))
+      .leftJoin(
+        db_utils.QueueSchema,
+        eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
+      )
+      .orderBy(db_utils.JobSchema.createdAt),
+  ]);
+
+  if (chosenScheduledJobs.length) return chosenScheduledJobs[0];
+  else if (chosenUnscheduledJobs.length) return chosenUnscheduledJobs[0];
   else return null;
 };
 
@@ -167,7 +187,35 @@ export const updateJobRetryCountByOne = async (jobId: string): SingleJob => {
 
   const updatedJobs = await db
     .update(db_utils.JobSchema)
-    .set({ current_retry_count: fetchedJobs[0].current_retry_count + 1 })
+    .set({ currentRetryCount: fetchedJobs[0].currentRetryCount + 1 })
+    .where(eq(db_utils.JobSchema.id, jobId))
+    .returning();
+
+  if (updatedJobs.length) return updatedJobs[0];
+  else return null;
+};
+
+export const updateJobNextExecution = async (
+  jobId: string,
+  nextExecution: Date
+): SingleJob => {
+  const updatedJobs = await db
+    .update(db_utils.JobSchema)
+    .set({ nextExecution })
+    .where(eq(db_utils.JobSchema.id, jobId))
+    .returning();
+
+  if (updatedJobs.length) return updatedJobs[0];
+  else return null;
+};
+
+export const updateJobLastExecution = async (
+  jobId: string,
+  lastExecution: Date = new Date(Date.now())
+): SingleJob => {
+  const updatedJobs = await db
+    .update(db_utils.JobSchema)
+    .set({ lastExecution })
     .where(eq(db_utils.JobSchema.id, jobId))
     .returning();
 

@@ -13,8 +13,10 @@ export const QueueSchema = sqliteTable("queue", {
     .notNull(),
   name: text().unique().notNull(),
   callbackUrl: text("callback_url").notNull(),
-  retry_count: integer().default(3).notNull(),
-  response_wait_time_ms: text().default(default_reply_wait_time).notNull(),
+  retryCount: integer("retry_count").default(3).notNull(),
+  responseWaitTimeMs: text("response_wait_time_ms")
+    .default(default_reply_wait_time)
+    .notNull(),
 
   ...timestamps,
 });

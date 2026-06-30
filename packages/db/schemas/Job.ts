@@ -26,10 +26,10 @@ export const JobSchema = sqliteTable("job", {
   })
     .default("IDLE")
     .notNull(),
-  next_execution: integer({ mode: "timestamp" }),
-  last_execution: integer({ mode: "timestamp" }),
-  execution_recall: text({ mode: "json" }).$type<ExecutionRecall>(),
-  current_retry_count: integer().default(0).notNull(),
+  nextExecution: integer("next_execution", { mode: "timestamp" }),
+  lastExecution: integer("last_execution", { mode: "timestamp" }),
+  executionRecall: text("execution_recall", { mode: "json" }).$type<ExecutionRecall>(),
+  currentRetryCount: integer("current_retry_count").default(0).notNull(),
 
   ...timestamps,
 
