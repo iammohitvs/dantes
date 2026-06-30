@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
 import { job_utils, job_types, db_utils } from "../../packages-tunnel/db.ts";
 import { executable } from "../../index.ts";
-import { JobReplyRouterSchema, JobReplyRouterType } from "../schemas.ts";
+import { JobReplyRouterSchema, JobReplyRouterType } from "../schemas.zod.ts";
 import { OnReplyReturnType } from "../../core/types.ts";
 
 export const replyRoute = async (fastify: FastifyInstance) => {
