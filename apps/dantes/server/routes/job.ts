@@ -24,18 +24,15 @@ export const jobRoute = async (fastify: FastifyInstance) => {
   });
 
   fastify.post("/", async (req, res) => {
-    const newJobReceived: Record<string, string> = req.body as Record<
+    const newJobReceived: Record<string, string | number> = req.body as Record<
       string,
-      string
+      string | number
     >;
-
+    // add date normalising to utc
     const newJob = {
       ...newJobReceived,
       nextExecution: newJobReceived.nextExecution
         ? new Date(newJobReceived.nextExecution)
-        : null,
-      lastExecution: newJobReceived.lastExecution
-        ? new Date(newJobReceived.lastExecution)
         : null,
     } as db_utils.NewJob;
 

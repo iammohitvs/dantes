@@ -6,7 +6,7 @@ import {
   ReturnSingleJobWithQueue,
   ReturnManyJobsWithQueue,
 } from "./types.ts";
-import { and, eq, lte, isNotNull } from "drizzle-orm";
+import { and, eq, lte, isNotNull, isNull } from "drizzle-orm";
 
 export const getJobByJobId = async (
   jobId: string
@@ -109,7 +109,12 @@ export const pickNextJobToExecute = async (): ReturnSingleJobWithQueue => {
     db
       .select()
       .from(db_utils.JobSchema)
-      .where(eq(db_utils.JobSchema.status, "IDLE"))
+      .where(
+        and(
+          isNull(db_utils.JobSchema.nextExecution),
+          eq(db_utils.JobSchema.status, "IDLE")
+        )
+      )
       .leftJoin(
         db_utils.QueueSchema,
         eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
