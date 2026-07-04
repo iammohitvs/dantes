@@ -28,7 +28,7 @@ export const jobRoute = async (fastify: FastifyInstance) => {
       string,
       string | number
     >;
-    // add date normalising to utc
+
     const newJob = {
       ...newJobReceived,
       nextExecution: newJobReceived.nextExecution
@@ -47,9 +47,20 @@ export const jobRoute = async (fastify: FastifyInstance) => {
   });
 
   fastify.post("/add-bulk", async (req, res) => {
-    const newJob: db_utils.NewJob[] = req.body as db_utils.NewJob[];
+    const newJobsReceived: Record<string, string | number>[] =
+      req.body as Record<string, string | number>[];
 
-    const createdJob = await job_utils.createJobBulk(newJob);
+    const newJobs: db_utils.NewJob[] = newJobsReceived.map(
+      (newJobReceived) =>
+        ({
+          ...newJobReceived,
+          nextExecution: newJobReceived.nextExecution
+            ? new Date(newJobReceived.nextExecution)
+            : null,
+        } as db_utils.NewJob)
+    );
+
+    const createdJob = await job_utils.createJobBulk(newJobs);
 
     if (!createdJob)
       res
