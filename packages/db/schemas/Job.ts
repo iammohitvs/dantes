@@ -16,19 +16,16 @@ export const JobSchema = sqliteTable("job", {
     .default("SINGLE")
     .notNull(),
   status: text({
-    enum: [
-      "IDLE",
-      "PENDING",
-      "SUCCESS",
-      "FAILURE",
-      "ERRORED-OUT",
-    ],
+    enum: ["IDLE", "PENDING", "SUCCESS", "FAILURE", "ERRORED-OUT", "KILLED"],
   })
     .default("IDLE")
     .notNull(),
   nextExecution: integer("next_execution", { mode: "timestamp" }),
   lastExecution: integer("last_execution", { mode: "timestamp" }),
-  executionRecall: text("execution_recall", { mode: "json" }).$type<ExecutionRecall>(),
+  cronExpression: text("cron_expression"),
+  executionRecall: text("execution_recall", {
+    mode: "json",
+  }).$type<ExecutionRecall>(),
   currentRetryCount: integer("current_retry_count").default(0).notNull(),
 
   ...timestamps,

@@ -165,6 +165,7 @@ export class Executable {
         }),
         job_utils.setJobAsRunning(selectedJob.job.id),
         job_utils.updateJobLastExecution(selectedJob.job.id),
+        job_utils.updateJobNextExecution(selectedJob.job.id),
       ]);
 
       this.dispatchJob(

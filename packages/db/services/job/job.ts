@@ -7,6 +7,7 @@ import {
   ReturnManyJobsWithQueue,
 } from "./types.ts";
 import { and, eq, lte, isNotNull, isNull } from "drizzle-orm";
+import { CronDate, CronExpressionParser } from "cron-parser";
 
 export const getJobByJobId = async (
   jobId: string
@@ -26,7 +27,13 @@ export const getJobByJobId = async (
 
 export const getJobs = async (
   type?: "SINGLE" | "CRON",
-  status?: "IDLE" | "PENDING" | "SUCCESS" | "FAILURE",
+  status?:
+    | "IDLE"
+    | "PENDING"
+    | "SUCCESS"
+    | "FAILURE"
+    | "ERRORED-OUT"
+    | "KILLED",
   queueId?: string
 ): ReturnManyJobsWithQueue => {
   return await db
@@ -90,38 +97,58 @@ export const deleteJob = async (jobId: string): SingleJob => {
 export const pickNextJobToExecute = async (): ReturnSingleJobWithQueue => {
   const currentTimestamp: Date = new Date(Date.now());
 
-  const [chosenScheduledJobs, chosenUnscheduledJobs] = await Promise.all([
-    db
-      .select()
-      .from(db_utils.JobSchema)
-      .where(
-        and(
-          eq(db_utils.JobSchema.status, "IDLE"),
-          isNotNull(db_utils.JobSchema.nextExecution),
-          lte(db_utils.JobSchema.nextExecution, currentTimestamp)
+  const [chosenCronJobs, chosenScheduledJobs, chosenUnscheduledJobs] =
+    await Promise.all([
+      db
+        .select()
+        .from(db_utils.JobSchema)
+        .where(
+          and(
+            eq(db_utils.JobSchema.type, "CRON"),
+            eq(db_utils.JobSchema.status, "IDLE"),
+            isNotNull(db_utils.JobSchema.nextExecution),
+            lte(db_utils.JobSchema.nextExecution, currentTimestamp)
+          )
         )
-      )
-      .leftJoin(
-        db_utils.QueueSchema,
-        eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
-      )
-      .orderBy(db_utils.JobSchema.nextExecution),
-    db
-      .select()
-      .from(db_utils.JobSchema)
-      .where(
-        and(
-          isNull(db_utils.JobSchema.nextExecution),
-          eq(db_utils.JobSchema.status, "IDLE")
+        .leftJoin(
+          db_utils.QueueSchema,
+          eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
         )
-      )
-      .leftJoin(
-        db_utils.QueueSchema,
-        eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
-      )
-      .orderBy(db_utils.JobSchema.createdAt),
-  ]);
+        .orderBy(db_utils.JobSchema.nextExecution),
+      db
+        .select()
+        .from(db_utils.JobSchema)
+        .where(
+          and(
+            eq(db_utils.JobSchema.type, "SINGLE"),
+            eq(db_utils.JobSchema.status, "IDLE"),
+            isNotNull(db_utils.JobSchema.nextExecution),
+            lte(db_utils.JobSchema.nextExecution, currentTimestamp)
+          )
+        )
+        .leftJoin(
+          db_utils.QueueSchema,
+          eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
+        )
+        .orderBy(db_utils.JobSchema.nextExecution),
+      db
+        .select()
+        .from(db_utils.JobSchema)
+        .where(
+          and(
+            eq(db_utils.JobSchema.type, "SINGLE"),
+            eq(db_utils.JobSchema.status, "IDLE"),
+            isNull(db_utils.JobSchema.nextExecution)
+          )
+        )
+        .leftJoin(
+          db_utils.QueueSchema,
+          eq(db_utils.JobSchema.queueId, db_utils.QueueSchema.id)
+        )
+        .orderBy(db_utils.JobSchema.createdAt),
+    ]);
 
+  if (chosenCronJobs.length) return chosenCronJobs[0];
   if (chosenScheduledJobs.length) return chosenScheduledJobs[0];
   else if (chosenUnscheduledJobs.length) return chosenUnscheduledJobs[0];
   else return null;
@@ -171,6 +198,17 @@ export const setJobAsErrored = async (jobId: string): SingleJob => {
   else return null;
 };
 
+export const setJobAsKilled = async (jobId: string): SingleJob => {
+  const selectedJobs = await db
+    .update(db_utils.JobSchema)
+    .set({ status: "KILLED" })
+    .where(eq(db_utils.JobSchema.id, jobId))
+    .returning();
+
+  if (selectedJobs.length) return selectedJobs[0];
+  else return null;
+};
+
 export const setJobAsIdle = async (jobId: string): SingleJob => {
   const selectedJobs = await db
     .update(db_utils.JobSchema)
@@ -202,16 +240,33 @@ export const updateJobRetryCountByOne = async (jobId: string): SingleJob => {
 
 export const updateJobNextExecution = async (
   jobId: string,
-  nextExecution: Date
 ): SingleJob => {
-  const updatedJobs = await db
-    .update(db_utils.JobSchema)
-    .set({ nextExecution })
-    .where(eq(db_utils.JobSchema.id, jobId))
-    .returning();
+  const jobsToUpdate = await db
+    .select()
+    .from(db_utils.JobSchema)
+    .where(eq(db_utils.JobSchema.id, jobId));
 
-  if (updatedJobs.length) return updatedJobs[0];
-  else return null;
+  if (jobsToUpdate.length) {
+    if (jobsToUpdate[0].type === "CRON") {
+      const nextExecution: CronDate = CronExpressionParser.parse(
+        jobsToUpdate[0].cronExpression as string
+      ).next();
+
+      console.log(`next execution update: ---- ${nextExecution.toISOString()} ----`);
+
+      const updatedJobs = await db
+        .update(db_utils.JobSchema)
+        .set({ nextExecution: nextExecution.toDate() })
+        .where(eq(db_utils.JobSchema.id, jobId))
+        .returning();
+
+      if (updatedJobs.length) return updatedJobs[0];
+      else return null;
+    } else {
+      // This needs to be changed to accomodate exponential backoffs!
+      return null;
+    }
+  } else return null;
 };
 
 export const updateJobLastExecution = async (

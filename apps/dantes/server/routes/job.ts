@@ -1,5 +1,9 @@
 import { FastifyInstance } from "fastify";
 import { job_utils, job_types, db_utils } from "../../packages-tunnel/db.ts";
+import {
+  CronExpressionScehma,
+  createNextExecutionFromCronExpression,
+} from "../../utils/cron.ts";
 
 export const jobRoute = async (fastify: FastifyInstance) => {
   fastify.get("/", async (req, res) => {
@@ -29,11 +33,31 @@ export const jobRoute = async (fastify: FastifyInstance) => {
       string | number
     >;
 
+    if (newJobReceived.cronExpression) {
+      const cronParsingResult = CronExpressionScehma.safeParse(
+        newJobReceived.cronExpression
+      );
+
+      if (!cronParsingResult.success) {
+        return res
+          .status(500)
+          .send({ status: "error", message: cronParsingResult.error.message });
+      }
+
+      newJobReceived.nextExecution = createNextExecutionFromCronExpression(
+        newJobReceived.cronExpression as string
+      );
+
+      console.log(`----now: ${new Date(Date.now()).toISOString()}-----`);
+      console.log(`----next execution: ${newJobReceived.nextExecution}-----`);
+    }
+
     const newJob = {
       ...newJobReceived,
       nextExecution: newJobReceived.nextExecution
         ? new Date(newJobReceived.nextExecution)
         : null,
+      cronExpression: newJobReceived.cronExpression,
     } as db_utils.NewJob;
 
     const createdJob = await job_utils.createJob(newJob);
@@ -68,6 +92,19 @@ export const jobRoute = async (fastify: FastifyInstance) => {
         .send({ status: "error", message: "Error creating your job" });
 
     return res.status(200).send({ status: "success", createdJob });
+  });
+
+  fastify.put("/:jobId/kill", async (req, res) => {
+    const { jobId } = req.params as { jobId: string };
+
+    const updatedJob = await job_utils.setJobAsKilled(jobId);
+
+    if (!updatedJob)
+      res
+        .status(500)
+        .send({ status: "error", message: "Error creating your job" });
+
+    return res.status(200).send({ status: "success", updatedJob });
   });
 
   fastify.delete("/:jobId", async (req, res) => {
