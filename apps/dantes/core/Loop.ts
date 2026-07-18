@@ -10,7 +10,7 @@ export class Loop {
 
   constructor(
     executable: Executable,
-    wait_time_ms: number = 500,
+    wait_time_ms: number = Number(process.env.DEFAULT_WAIT_TIME_MS) || 500,
     params: any[]
   ) {
     this.wait_time_ms = wait_time_ms;

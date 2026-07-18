@@ -47,9 +47,6 @@ export const jobRoute = async (fastify: FastifyInstance) => {
       newJobReceived.nextExecution = createNextExecutionFromCronExpression(
         newJobReceived.cronExpression as string
       );
-
-      console.log(`----now: ${new Date(Date.now()).toISOString()}-----`);
-      console.log(`----next execution: ${newJobReceived.nextExecution}-----`);
     }
 
     const newJob = {

@@ -3,8 +3,6 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { timestamps } from "./helpers.js";
 import { QueueSchema } from "./Queue.js";
 
-export type ExecutionRecall = Date[];
-
 export const JobSchema = sqliteTable("job", {
   id: text()
     .$defaultFn(() => randomUUID())
@@ -23,9 +21,6 @@ export const JobSchema = sqliteTable("job", {
   nextExecution: integer("next_execution", { mode: "timestamp" }),
   lastExecution: integer("last_execution", { mode: "timestamp" }),
   cronExpression: text("cron_expression"),
-  executionRecall: text("execution_recall", {
-    mode: "json",
-  }).$type<ExecutionRecall>(),
   currentRetryCount: integer("current_retry_count").default(0).notNull(),
 
   ...timestamps,

@@ -169,7 +169,12 @@ export const setJobAsSuccessful = async (jobId: string): SingleJob => {
   const selectedJobs = await db
     .update(db_utils.JobSchema)
     .set({ status: "SUCCESS" })
-    .where(eq(db_utils.JobSchema.id, jobId))
+    .where(
+      and(
+        eq(db_utils.JobSchema.id, jobId),
+        eq(db_utils.JobSchema.type, "SINGLE")
+      )
+    )
     .returning();
 
   if (selectedJobs.length) return selectedJobs[0];
@@ -180,7 +185,12 @@ export const setJobAsFailed = async (jobId: string): SingleJob => {
   const selectedJobs = await db
     .update(db_utils.JobSchema)
     .set({ status: "FAILURE" })
-    .where(eq(db_utils.JobSchema.id, jobId))
+    .where(
+      and(
+        eq(db_utils.JobSchema.id, jobId),
+        eq(db_utils.JobSchema.type, "SINGLE")
+      )
+    )
     .returning();
 
   if (selectedJobs.length) return selectedJobs[0];
@@ -191,7 +201,12 @@ export const setJobAsErrored = async (jobId: string): SingleJob => {
   const selectedJobs = await db
     .update(db_utils.JobSchema)
     .set({ status: "ERRORED-OUT" })
-    .where(eq(db_utils.JobSchema.id, jobId))
+    .where(
+      and(
+        eq(db_utils.JobSchema.id, jobId),
+        eq(db_utils.JobSchema.type, "SINGLE")
+      )
+    )
     .returning();
 
   if (selectedJobs.length) return selectedJobs[0];
@@ -228,6 +243,8 @@ export const updateJobRetryCountByOne = async (jobId: string): SingleJob => {
 
   if (!fetchedJobs.length) return null;
 
+  if (fetchedJobs[0].type === "CRON") return null;
+
   const updatedJobs = await db
     .update(db_utils.JobSchema)
     .set({ currentRetryCount: fetchedJobs[0].currentRetryCount + 1 })
@@ -238,9 +255,7 @@ export const updateJobRetryCountByOne = async (jobId: string): SingleJob => {
   else return null;
 };
 
-export const updateJobNextExecution = async (
-  jobId: string,
-): SingleJob => {
+export const updateJobNextExecution = async (jobId: string): SingleJob => {
   const jobsToUpdate = await db
     .select()
     .from(db_utils.JobSchema)
@@ -251,8 +266,6 @@ export const updateJobNextExecution = async (
       const nextExecution: CronDate = CronExpressionParser.parse(
         jobsToUpdate[0].cronExpression as string
       ).next();
-
-      console.log(`next execution update: ---- ${nextExecution.toISOString()} ----`);
 
       const updatedJobs = await db
         .update(db_utils.JobSchema)
