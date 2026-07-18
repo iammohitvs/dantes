@@ -71,15 +71,34 @@ export const jobRoute = async (fastify: FastifyInstance) => {
     const newJobsReceived: Record<string, string | number>[] =
       req.body as Record<string, string | number>[];
 
-    const newJobs: db_utils.NewJob[] = newJobsReceived.map(
-      (newJobReceived) =>
-        ({
-          ...newJobReceived,
-          nextExecution: newJobReceived.nextExecution
-            ? new Date(newJobReceived.nextExecution)
-            : null,
-        } as db_utils.NewJob)
-    );
+    let errorInRequestParsing: string | null = null;
+
+    const newJobs: db_utils.NewJob[] = newJobsReceived.map((newJobReceived) => {
+      if (newJobReceived.cronExpression) {
+        const cronParsingResult = CronExpressionScehma.safeParse(
+          newJobReceived.cronExpression
+        );
+
+        if (!cronParsingResult.success) {
+          errorInRequestParsing = cronParsingResult.error.message;
+        } else {
+          newJobReceived.nextExecution = createNextExecutionFromCronExpression(
+            newJobReceived.cronExpression as string
+          );
+        }
+      }
+
+      return {
+        ...newJobReceived,
+        nextExecution: newJobReceived.nextExecution
+          ? new Date(newJobReceived.nextExecution)
+          : null,
+      } as db_utils.NewJob;
+    });
+
+    if (errorInRequestParsing) {
+      res.status(500).send({ status: "error", message: errorInRequestParsing });
+    }
 
     const createdJob = await job_utils.createJobBulk(newJobs);
 
