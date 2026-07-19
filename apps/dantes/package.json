@@ -11,6 +11,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@fastify/cors": "^11.3.0",
     "@packages/db": "workspace:*",
     "axios": "^1.18.0",
     "cron-parser": "^5.6.1",
