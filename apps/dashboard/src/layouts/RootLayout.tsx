@@ -3,9 +3,9 @@ import { Outlet } from "react-router";
 
 const RootLayout = () => {
   return (
-    <div className="bg-black text-white">
+    <section id="home" className="">
       <Outlet />
-    </div>
+    </section>
   );
 };
 
