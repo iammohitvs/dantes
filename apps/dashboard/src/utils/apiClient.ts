@@ -1,6 +1,9 @@
 import axios from "axios";
 
-export const apiClient = axios.create({ baseURL: "http://localhost:6969" });
+export const apiClient = axios.create({
+  baseURL: "http://localhost:6969",
+  withCredentials: true,
+});
 
 apiClient.interceptors.response.use((config) => {
   return config;
@@ -23,12 +26,12 @@ export const handleAxiosError = (error: any) => {
   }
 };
 
-export const handleTryCatch = <T>(
-  func: () => Promise<T>
-): (() => Promise<T>) => {
-  return async () => {
+export const handleTryCatch = <T, Args extends unknown[]>(
+  func: (...args: Args) => Promise<T>
+): ((...args: Args) => Promise<T>) => {
+  return async (...args: Args) => {
     try {
-      return await func();
+      return await func(...args);
     } catch (error) {
       handleAxiosError(error);
       throw error;

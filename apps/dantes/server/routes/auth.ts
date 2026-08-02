@@ -23,6 +23,7 @@ export const authRoute = async (fastify: FastifyInstance) => {
       .status(200)
       .setCookie("token", loginResponse.message, {
         expires: generateExpiresDate(),
+        path: "/",
       })
       .send({ status: "success", message: "login successful" });
   });
@@ -46,7 +47,10 @@ export const authRoute = async (fastify: FastifyInstance) => {
 
     return res
       .status(200)
-      .setCookie("token", result.message, { expires: generateExpiresDate() })
+      .setCookie("token", result.message, {
+        expires: generateExpiresDate(),
+        path: "/",
+      })
       .send({ status: "success", message: "token verified" });
   });
 

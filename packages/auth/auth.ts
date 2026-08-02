@@ -1,5 +1,9 @@
-import { hash } from "bcrypt";
-import { sign, verify } from "jsonwebtoken";
+import "dotenv/config";
+
+import bcrypt from "bcrypt";
+import jsonwebtoken from "jsonwebtoken";
+const { compare } = bcrypt;
+const { sign, verify } = jsonwebtoken;
 import { LoginReturnType, VerifyTokenReturnType } from "./types.ts";
 
 const USERNAME = process.env.USERNAME;
@@ -9,12 +13,12 @@ const HASH_ROUNDS = Number(process.env.HASH_ROUNDS ?? 12);
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
-  throw new Error("JWT_SECTER is missing from envs");
+  throw new Error("JWT_SECRET is missing from envs");
 }
 
 const generateToken = () => {
   return sign({ username: USERNAME }, JWT_SECRET, {
-    algorithm: "RS256",
+    algorithm: "HS256",
     expiresIn: "30 minutes",
   });
 };
@@ -27,27 +31,27 @@ export const login = async (
     if (!USERNAME && !PASSWORD) {
       return {
         status: false,
-        message: "username and password are not deinefd in the environment",
+        message: "username and password are not defined in the environment",
       };
     }
-
+    
     if (username !== USERNAME) {
       return {
         status: false,
         message: "username and/or password are incorrect",
       };
     }
-
-    const hashedPassword = await hash(password, HASH_ROUNDS);
-    if (hashedPassword !== PASSWORD) {
+    
+    const isValidPassword = await compare(password, PASSWORD as string);
+    if (!isValidPassword) {
       return {
         status: false,
         message: "username and/or password are incorrect",
       };
     }
-
+    
     const signedToken = generateToken();
-
+    
     return { status: true, message: signedToken };
   } catch (error) {
     return {

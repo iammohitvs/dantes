@@ -12,7 +12,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 export const fastify = Fastify({ logger: true });
 export const logger = fastify.log;
 
-await fastify.register(cors, { origin: [FRONTEND_URL] });
+await fastify.register(cors, { origin: [FRONTEND_URL], credentials: true });
 await fastify.register(fastify_cookie);
 
 fastify.get("/health", (req, res) => {
