@@ -1,8 +1,5 @@
 import { FastifyInstance } from "fastify";
-import {
-  db_utils,
-  queue_utils,
-} from "../../packages-tunnel/db.ts";
+import { db_utils, queue_utils } from "../../packages-tunnel/db.ts";
 
 export const queueRoute = async (fastify: FastifyInstance) => {
   fastify.post("/", async (req, res) => {
@@ -10,6 +7,20 @@ export const queueRoute = async (fastify: FastifyInstance) => {
 
     const createdQueue = await queue_utils.createQueue(queue);
 
-    return res.status(200).send({ queue: createdQueue });
+    if (!createdQueue)
+      res.status(404).send({ status: "error", message: "Queue not created" });
+
+    return res.status(200).send({ status: "success", queue: createdQueue });
+  });
+
+  fastify.get("/", async (req, res) => {
+    const queues = await queue_utils.getAllQueues();
+
+    if (!queues)
+      res.status(404).send({ status: "error", message: "Queues not found" });
+
+    return res
+      .status(200)
+      .send({ status: "success", queues, queuesCount: queues?.length });
   });
 };

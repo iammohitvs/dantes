@@ -7,3 +7,8 @@ export type GetJobs = {
   jobs: { job: db_utils.Job; queue: db_utils.Queue }[];
   jobsCount: number;
 };
+
+export type GetJob = {
+  status: Status;
+  job: { job: db_utils.Job; queue: db_utils.Queue };
+};

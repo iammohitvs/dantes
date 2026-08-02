@@ -13,6 +13,13 @@ export const getQueueById = async (queueId: string): SingleQueue => {
   else return null;
 };
 
+export const getAllQueues = async (): ManyQueues => {
+  const foundQueues = await db.select().from(db_utils.QueueSchema);
+
+  if (foundQueues.length) return foundQueues;
+  else return null;
+};
+
 export const getQueueCallbackUrl = async (
   queueId: string
 ): Promise<string | null> => {

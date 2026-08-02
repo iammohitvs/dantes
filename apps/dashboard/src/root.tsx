@@ -10,6 +10,7 @@ import Jobpage from "./pages/Jobpage";
 import Loginpage from "./pages/Loginpage";
 import { Toaster } from "@/components/ui/toast";
 import AuthLayout from "./layouts/AuthLayout";
+import Queuepage from "./pages/Queuepage";
 
 const root = document.getElementById("root");
 const queryClient = new QueryClient({
@@ -23,7 +24,8 @@ ReactDom.createRoot(root as ReactDom.Container).render(
         <Routes>
           <Route element={<RootLayout />}>
             <Route path="/" element={<App />} />
-            <Route path="/job" element={<Jobpage />} />
+            <Route path="/job/:jobId" element={<Jobpage />} />
+            <Route path="/queues" element={<Queuepage />} />
           </Route>
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Loginpage />} />

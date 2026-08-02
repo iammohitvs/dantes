@@ -15,23 +15,27 @@ import { NavLink } from "react-router";
 import { Separator } from "@/components/ui/separator";
 import copy from "copy-to-clipboard";
 import { toast } from "@/components/ui/toast";
+import Loader from "@/components/Loader";
 
 const Homepage = () => {
   useValidationLoop();
   const { data: jobs, isFetching, refetchJobs } = useGetJobs();
 
-  if (isFetching) return null;
+  if (isFetching) return <Loader type="full" loadingText="Loading Jobs..." />;
 
   return (
     <section id="jobs" className="flex flex-col gap-4">
       <div className="flex flex-row justify-between">
-        <h1 className="text-3xl font-semibold tracking-wide">All Jobs</h1>
+        <h1 className="text-3xl font-semibold tracking-wide">
+          All Jobs ({jobs.jobsCount})
+        </h1>
         <Button
-          size="icon-lg"
+          size="lg"
           variant="secondary"
           onClick={() => refetchJobs()}
+          className="hover:cursor-pointer"
         >
-          <HugeiconsIcon icon={Refresh04Icon} />
+          <HugeiconsIcon icon={Refresh04Icon} /> Refetch All Jobs
         </Button>
       </div>
 
