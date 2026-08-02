@@ -32,6 +32,15 @@ const data = {
         },
       ],
     },
+    {
+      title: "Docs",
+      items: [
+        {
+          title: "GitHub",
+          url: "https://github.com/iammohitvs/dantes/",
+        },
+      ],
+    },
   ],
 };
 
@@ -43,7 +52,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <a href="/">Dantes 🧭</a>
         </div>
       </SidebarHeader>
-      <SidebarContent className="flex flex-col justify-between">
+      <SidebarContent className="flex flex-col">
         {data.navMain.map((item) => (
           <SidebarGroup key={item.title}>
             <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
@@ -61,6 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+        <div className="flex-1" />
         <Logout />
       </SidebarContent>
     </Sidebar>

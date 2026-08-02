@@ -1,9 +1,11 @@
 import React from "react";
 import { useGetJobs } from "../hooks/jobs.hooks";
+import { useValidationLoop } from "@/hooks/auth.hooks";
 
 const Homepage = () => {
+  useValidationLoop();
   const { data: jobs, isFetching } = useGetJobs();
-  
+
   if (isFetching) return null;
 
   return (

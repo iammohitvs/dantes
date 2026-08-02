@@ -54,7 +54,7 @@ export function LoginForm({
                 <Input
                   id="username"
                   type="text"
-                  placeholder="EdmondDantes"
+                  placeholder="eg: edmond-dantes"
                   required
                   value={username}
                   onChange={(e) => {

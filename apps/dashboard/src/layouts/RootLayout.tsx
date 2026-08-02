@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/sidebar";
 
 const RootLayout = () => {
-  const { data, error, isFetching } = useValidateAuth();
+  const { data, error, isPending } = useValidateAuth();
   const navigate = useNavigate();
 
-  if (isFetching) {
+  if (isPending) {
     return <Loader type="full" />;
   }
 

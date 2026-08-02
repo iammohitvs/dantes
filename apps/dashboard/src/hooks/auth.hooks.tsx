@@ -1,16 +1,16 @@
 import { login, logout, validateAuth } from "@/services/auth.services";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
 
+const VALIDATION_INTERVAL = 10 * 1000;
 const TOAST_TIMEOUT = 5 * 1000;
 
 export const useValidateAuth = () => {
   const { data, error, isFetching, isPending, isLoading } = useQuery({
     queryKey: ["validate-auth"],
     queryFn: validateAuth,
-    
   });
 
   return { data: data as true, error, isFetching, isPending, isLoading };
@@ -76,5 +76,27 @@ export const useLogout = () => {
   return {
     logoutMutation,
     isPending: logoutMutation.isPending,
+  };
+};
+
+export const useValidationLoop = () => {
+  const queryClient = useQueryClient();
+  const { isPending } = useQuery({
+    queryKey: ["validate-auth"],
+    queryFn: validateAuth,
+  });
+
+  useEffect(() => {
+    const authValidationInterval = setInterval(() => {
+      queryClient.refetchQueries({ queryKey: ["validate-auth"] });
+    }, VALIDATION_INTERVAL);
+
+    return () => {
+      clearInterval(authValidationInterval);
+    };
+  }, []);
+
+  return {
+    isPending,
   };
 };
