@@ -6,7 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LinkSquare02Icon, CopyLinkIcon } from "@hugeicons/core-free-icons";
+import {
+  LinkSquare02Icon,
+  CopyLinkIcon,
+  Refresh04Icon,
+} from "@hugeicons/core-free-icons";
 import { NavLink } from "react-router";
 import { Separator } from "@/components/ui/separator";
 import copy from "copy-to-clipboard";
@@ -14,13 +18,22 @@ import { toast } from "@/components/ui/toast";
 
 const Homepage = () => {
   useValidationLoop();
-  const { data: jobs, isFetching } = useGetJobs();
+  const { data: jobs, isFetching, refetchJobs } = useGetJobs();
 
   if (isFetching) return null;
 
   return (
     <section id="jobs" className="flex flex-col gap-4">
-      <h1 className="text-3xl font-semibold tracking-wide">All Jobs</h1>
+      <div className="flex flex-row justify-between">
+        <h1 className="text-3xl font-semibold tracking-wide">All Jobs</h1>
+        <Button
+          size="icon-lg"
+          variant="secondary"
+          onClick={() => refetchJobs()}
+        >
+          <HugeiconsIcon icon={Refresh04Icon} />
+        </Button>
+      </div>
 
       <div className="flex flex-col gap-4">
         {jobs.jobs.map(({ job, queue }) => (
