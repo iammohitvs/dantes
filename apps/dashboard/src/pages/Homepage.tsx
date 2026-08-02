@@ -3,7 +3,9 @@ import { useGetJobs } from "../hooks/jobs.hooks";
 
 const Homepage = () => {
   const { data: jobs, isFetching } = useGetJobs();
+  
   if (isFetching) return null;
+
   return (
     <div>
       {jobs.jobs.map(({ job, queue }) => (

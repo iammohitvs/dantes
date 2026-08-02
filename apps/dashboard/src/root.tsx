@@ -6,6 +6,7 @@ import "./globals.css"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RootLayout from "./layouts/RootLayout";
+import Jobpage from "./pages/Jobpage";
 
 const root = document.getElementById("root");
 const queryClient = new QueryClient();
@@ -17,6 +18,7 @@ ReactDom.createRoot(root as ReactDom.Container).render(
         <Routes>
           <Route element={<RootLayout />}>
             <Route path="/" element={<App />} />
+            <Route path="/job" element={<Jobpage />} />
           </Route>
         </Routes>
       </BrowserRouter>
