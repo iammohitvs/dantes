@@ -4,10 +4,7 @@ import { useValidateAuth } from "@/hooks/auth.hooks";
 import React, { useState } from "react";
 import { Outlet } from "react-router";
 import { useNavigate } from "react-router";
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 const RootLayout = () => {
   const { data, error, isPending } = useValidateAuth();
@@ -27,7 +24,9 @@ const RootLayout = () => {
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>
-            <Outlet />
+            <div className="p-8">
+              <Outlet />
+            </div>
           </SidebarInset>
         </SidebarProvider>
       </section>
