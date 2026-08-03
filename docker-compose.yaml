@@ -1,0 +1,50 @@
+services:
+  dantes-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: dantes-server
+    restart: unless-stopped
+    env_file:
+      - ./apps/dantes/.env
+    volumes:
+      - dantes-data:/app/data
+    networks:
+      - dantes-network
+    expose:
+      - "6969"
+
+  dantes-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: dantes-dashboard
+    restart: unless-stopped
+    networks:
+      - dantes-network
+    expose:
+      - "3000"
+
+  dantes-nginx:
+    image: nginx-alpine
+    container_name: dantes-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - dantes-server
+      - dantes-dashboard
+    networks:
+      - dantes-network
+
+# for SQLite data to persist
+volumes:
+  dantes-data:
+    name: dantes-data
+
+networks:
+  dantes-network:
+    name: dantes-network
+    driver: bridge
