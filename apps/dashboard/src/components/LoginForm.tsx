@@ -43,7 +43,7 @@ export function LoginForm({
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">
-            👋 Hi there, welcome to <b className="underline">Dantes</b>
+            👋 Hi there, welcome to <b className="underline">Dantes 🧭</b>
           </CardTitle>
         </CardHeader>
         <CardContent>

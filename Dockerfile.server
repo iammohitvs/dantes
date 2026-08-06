@@ -35,11 +35,11 @@ COPY pnpm-workspace.yaml ./
 COPY package.json ./
 
 COPY --from=builder /app/packages/db/dist ./packages/db/dist
-COPY --from=builder /app/packages/db/pakage.json ./packages/db/
+COPY --from=builder /app/packages/db/package.json ./packages/db/
 COPY --from=builder /app/packages/auth/dist ./packages/auth/dist
-COPY --from=builder /app/packages/auth/pakage.json ./packages/auth/
+COPY --from=builder /app/packages/auth/package.json ./packages/auth/
 COPY --from=builder /app/apps/dantes/dist ./apps/dantes/dist
-COPY --from=builder /app/apps/dantes/pakage.json ./apps/dantes/
+COPY --from=builder /app/apps/dantes/package.json ./apps/dantes/
 
 RUN pnpm install --prod --frozen-lockfile
 

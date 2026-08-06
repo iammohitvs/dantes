@@ -25,7 +25,7 @@ type JobPageParams = {
 const Jobpage = () => {
   const params = useParams<JobPageParams>();
 
-  const { data: job, isFetching, refetchJob } = useGetJob(params.jobId);
+  const { data: job, isFetching, refetchJob } = useGetJob(params.jobId!);
 
   if (isFetching) return <Loader loadingText="Loading job..." type="full" />;
 
