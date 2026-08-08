@@ -7,3 +7,16 @@ allowBuilds:
   bcrypt: false
   better-sqlite3: true
   esbuild: true
+supportedArchitectures:
+  os:
+    - linux
+    - darwin
+    - current
+  cpu:
+    - x64
+    - arm64
+    - current
+  libc:
+    - musl
+    - glibc
+    - current
