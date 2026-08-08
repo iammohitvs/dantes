@@ -1,7 +1,8 @@
 import axios from "axios";
+import { NODE_ENV } from "../../vite.config";
 
 export const apiClient = axios.create({
-  baseURL: "http://localhost:6969",
+  baseURL: NODE_ENV === "production" ? "/api" : "http://localhost:6969",
   withCredentials: true,
 });
 
