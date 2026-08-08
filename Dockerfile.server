@@ -42,6 +42,7 @@ COPY --from=builder /app/packages/auth/dist ./packages/auth/dist
 COPY --from=builder /app/packages/auth/package.json ./packages/auth/
 COPY --from=builder /app/apps/dantes/dist ./apps/dantes/dist
 COPY --from=builder /app/apps/dantes/package.json ./apps/dantes/
+COPY --from=builder /app/packages/db/drizzle ./packages/db/drizzle
 
 RUN pnpm install --prod --frozen-lockfile
 
