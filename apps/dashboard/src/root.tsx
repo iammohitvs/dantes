@@ -20,7 +20,7 @@ const queryClient = new QueryClient({
 ReactDom.createRoot(root as ReactDom.Container).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename="/dashboard">
         <Routes>
           <Route element={<RootLayout />}>
             <Route path="/" element={<App />} />
