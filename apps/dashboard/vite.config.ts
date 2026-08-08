@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-export const NODE_ENV: string = "production"
+export const NODE_ENV: string = "development"
 
 // https://vite.dev/config/
 export default defineConfig({
