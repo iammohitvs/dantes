@@ -3,11 +3,9 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-const NODE_ENV: string = "production";
-
 // https://vite.dev/config/
 export default defineConfig({
-  base: NODE_ENV === "production" ? "/dashboard/" : "",
+  base: "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
