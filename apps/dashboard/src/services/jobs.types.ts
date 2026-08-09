@@ -1,14 +1,14 @@
-import { db_utils } from "../packages-tunnel/db";
+import type { Job, Queue } from "../packages-tunnel/db";
 
 export type Status = "success" | "error";
 
 export type GetJobs = {
   status: Status;
-  jobs: { job: db_utils.Job; queue: db_utils.Queue }[];
+  jobs: { job: Job; queue: Queue }[];
   jobsCount: number;
 };
 
 export type GetJob = {
   status: Status;
-  job: { job: db_utils.Job; queue: db_utils.Queue };
+  job: { job: Job; queue: Queue };
 };
