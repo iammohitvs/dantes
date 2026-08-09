@@ -69,11 +69,9 @@ echo -e "${GREEN}✓ Node.js is ready${NC}"
 export NODE_PATH="$(npm root -g):$NODE_PATH"
 if ! node -e "require('bcrypt')" 2>/dev/null; then
     echo -e "${YELLOW}bcrypt library not found. Installing globally...${NC}"
-    npm install -g bcrypt >/dev/null 2>&1
-    if [ $? -ne 0 ]; then
+    if ! npm install -g bcrypt >/dev/null 2>&1; then
         echo -e "${RED}✗ Failed to install bcrypt globally. Trying with sudo...${NC}"
-        sudo npm install -g bcrypt >/dev/null 2>&1
-        if [ $? -ne 0 ]; then
+        if ! sudo npm install -g bcrypt >/dev/null 2>&1; then
             echo -e "${RED}✗ Failed to install bcrypt.${NC}"
             echo "  Try running: sudo npm install -g bcrypt"
             exit 1
