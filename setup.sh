@@ -10,7 +10,11 @@ bcrypt_hash() {
     return 1
   fi
 
-  python3 -c "import bcrypt,sys; print(bcrypt.hashpw(sys.argv[1].encode(), bcrypt.gensalt(rounds=int(sys.argv[2]))).decode())" "$password" "$cost"
+  export NODE_PATH="$(npm root -g):$NODE_PATH"
+  node -e "
+const bcrypt = require('bcrypt');
+console.log(bcrypt.hashSync(process.argv[1], parseInt(process.argv[2])));
+" "$password" "$cost"
 }
 
 
@@ -43,32 +47,37 @@ fi
 
 echo -e "${GREEN}✓ Docker is ready${NC}"
 
-echo -e "${YELLOW}Checking Python 3 and bcrypt...${NC}"
+echo -e "${YELLOW}Checking Node.js and bcrypt...${NC}"
 
-if ! command -v python3 &> /dev/null; then
-    echo -e "${YELLOW}Python 3 not found. Installing...${NC}"
+if ! command -v node &> /dev/null; then
+    echo -e "${YELLOW}Node.js not found. Installing...${NC}"
     if command -v brew &> /dev/null; then
-        brew install python3
+        brew install node
     elif command -v apt-get &> /dev/null; then
-        sudo apt-get update && sudo apt-get install -y python3
+        sudo apt-get update && sudo apt-get install -y nodejs npm
     elif command -v yum &> /dev/null; then
-        sudo yum install -y python3
+        sudo yum install -y nodejs npm
     else
-        echo -e "${RED}✗ Cannot install Python 3 automatically.${NC}"
-        echo "  Please install Python 3 manually and try again."
+        echo -e "${RED}✗ Cannot install Node.js automatically.${NC}"
+        echo "  Please install Node.js manually and try again."
         exit 1
     fi
 fi
 
-echo -e "${GREEN}✓ Python 3 is ready${NC}"
+echo -e "${GREEN}✓ Node.js is ready${NC}"
 
-if ! python3 -c "import bcrypt" 2>/dev/null; then
-    echo -e "${YELLOW}bcrypt library not found. Installing...${NC}"
-    python3 -m pip install bcrypt
+export NODE_PATH="$(npm root -g):$NODE_PATH"
+if ! node -e "require('bcrypt')" 2>/dev/null; then
+    echo -e "${YELLOW}bcrypt library not found. Installing globally...${NC}"
+    npm install -g bcrypt >/dev/null 2>&1
     if [ $? -ne 0 ]; then
-        echo -e "${RED}✗ Failed to install bcrypt.${NC}"
-        echo "  Try running: pip3 install bcrypt"
-        exit 1
+        echo -e "${RED}✗ Failed to install bcrypt globally. Trying with sudo...${NC}"
+        sudo npm install -g bcrypt >/dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}✗ Failed to install bcrypt.${NC}"
+            echo "  Try running: sudo npm install -g bcrypt"
+            exit 1
+        fi
     fi
 fi
 
@@ -128,15 +137,15 @@ echo ""
 
 if command -v openssl &> /dev/null; then
     JWT_SECRET=$(openssl rand -base64 48)
-elif command -v python3 &> /dev/null; then
-    JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
+elif command -v node &> /dev/null; then
+    JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(36).toString('base64'))")
 else
     JWT_SECRET=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
 fi
 
 echo -e "${GREEN}✓ JWT secret generated automatically${NC}"
 
-echo -e "${YELLOW}Hashing password with bcrypt...${NC}"
+echo -e "${YELLOW}Hashing password with Node.js bcrypt...${NC}"
 HASHED_PASSWORD=$(bcrypt_hash "$PASSWORD" "12")
 if [ $? -ne 0 ]; then
     echo -e "${RED}✗ Failed to hash password. Using plain password (not recommended).${NC}"
