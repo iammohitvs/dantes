@@ -3,8 +3,6 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-const NODE_ENV: string = process.env.VITE_ENV!;
-
 function nativeModules(): Plugin {
   return {
     name: "native-modules",
@@ -23,12 +21,12 @@ function nativeModules(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: NODE_ENV === "production" ? "/dashboard/" : "/",
+export default defineConfig(({ command, mode }) => ({
+  base: mode === "production" || command === "build" ? "/dashboard/" : "/",
   plugins: [nativeModules(), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-});
+}));

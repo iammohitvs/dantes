@@ -115,6 +115,12 @@ while [[ -z "$PASSWORD" ]]; do
 done
 
 echo ""
+echo -e "${YELLOW}What is the public URL or IP where you will access this dashboard?${NC}"
+echo -e "${YELLOW}For local testing, you can leave this blank.${NC}"
+read -p "Public URL (default: http://localhost): " PUBLIC_URL
+PUBLIC_URL=${PUBLIC_URL:-http://localhost}
+PUBLIC_URL=${PUBLIC_URL%/}
+echo ""
 echo -e "${YELLOW}Base callback URL is the publicly accessible URL of your worker app.${NC}"
 echo -e "${YELLOW}Leave blank if you'll configure this later.${NC}"
 read -p "Base callback URL (optional, e.g. https://myapp.com): " BASE_CALLBACK_URL
@@ -144,7 +150,7 @@ cat > ./apps/dantes/.env << EOF
 
 # dantes specific paths
 DANTES_PORT="6969"
-FRONTEND_URL="http://localhost/dashboard"
+FRONTEND_URL="${PUBLIC_URL}/dashboard"
 BASE_CALLBACK_URL="${BASE_CALLBACK_URL}"
 
 WAIT_TIME_MS="1000"
@@ -204,8 +210,8 @@ echo -e "${BOLD}${GREEN}╔═════════════════�
 echo -e "${BOLD}${GREEN}║   ✓ dantes is up and running!             ║${NC}"
 echo -e "${BOLD}${GREEN}╚═══════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  Dashboard: ${BLUE}http://localhost/dashboard${NC}"
-echo -e "  API:       ${BLUE}http://localhost/api${NC}"
+echo -e "  Dashboard: ${BLUE}${PUBLIC_URL}/dashboard${NC}"
+echo -e "  API:       ${BLUE}${PUBLIC_URL}/api${NC}"
 echo ""
 echo -e "  Login with the credentials you just set up."
 echo ""
