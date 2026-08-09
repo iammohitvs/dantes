@@ -1,9 +1,7 @@
 import axios from "axios";
 
-const NODE_ENV: string = process.env.VITE_ENV!;
-
 export const apiClient = axios.create({
-  baseURL: NODE_ENV === "production" ? "/api" : "http://localhost:6969",
+  baseURL: import.meta.env.MODE === "production" ? "/api" : "http://localhost:6969",
   withCredentials: true,
 });
 
