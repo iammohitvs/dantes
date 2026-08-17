@@ -16,8 +16,22 @@ import { Button } from "./ui/button";
 import Logout from "./Logout";
 import { NavLink } from "react-router";
 
+type NavItem = {
+  title: string;
+  url: string;
+  external?: boolean;
+};
+
+type NavHeading = {
+  title: string;
+  url?: string;
+  items: NavItem[];
+};
+
+type NavData = { navMain: NavHeading[] };
+
 // This is sample data.
-const data = {
+const data: NavData = {
   navMain: [
     {
       title: "Core",

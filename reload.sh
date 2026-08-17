@@ -15,10 +15,11 @@ echo -e "${BOLD}${BLUE}╚══════════════════
 echo ""
 
 echo -e "${YELLOW}Stopping containers...${NC}"
-docker compose down
+git fetch origin
+git reset --hard origin/main
 
 echo -e "${YELLOW}Pulling latest changes...${NC}"
-git pull
+git pull origin main
 
 echo -e "${YELLOW}Removing cached images...${NC}"
 docker rmi dantes-dantes-server dantes-dantes-dashboard 2>/dev/null || true
