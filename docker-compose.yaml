@@ -5,9 +5,8 @@ services:
       dockerfile: Dockerfile.server
     container_name: dantes-server
     restart: unless-stopped
-    env_file:
-      - ./apps/dantes/.env
     volumes:
+      - ./apps/dantes/.env:/app/.env:ro
       - dantes-data:/app/data
     networks:
       - dantes-network

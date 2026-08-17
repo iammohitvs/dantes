@@ -145,9 +145,10 @@ echo -e "${GREEN}✓ JWT secret generated automatically${NC}"
 
 echo -e "${YELLOW}Hashing password with Node.js bcrypt...${NC}"
 HASHED_PASSWORD=$(bcrypt_hash "$PASSWORD" "12")
-if [ $? -ne 0 ]; then
-    echo -e "${RED}✗ Failed to hash password. Using plain password (not recommended).${NC}"
-    HASHED_PASSWORD="$PASSWORD"
+if [[ ${#HASHED_PASSWORD} -ne 60 || ! "$HASHED_PASSWORD" =~ ^\$2[aby]\$[0-9]{2}\$ ]]; then
+    echo -e "${RED}✗ Generated password hash is malformed (expected 60 chars, got ${#HASHED_PASSWORD}).${NC}"
+    echo "  Refusing to write .env with a bad credential."
+    exit 1
 fi
 echo -e "${GREEN}✓ Password hashed successfully${NC}"
 
