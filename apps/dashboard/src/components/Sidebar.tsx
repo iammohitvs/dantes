@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "./ui/button";
 import Logout from "./Logout";
+import { NavLink } from "react-router";
 
 // This is sample data.
 const data = {
@@ -38,6 +39,7 @@ const data = {
         {
           title: "GitHub",
           url: "https://github.com/iammohitvs/dantes/",
+          external: true,
         },
       ],
     },
@@ -62,7 +64,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuItem key={item.title}>
                     {/* @ts-ignore */}
                     <SidebarMenuButton asChild isActive={item.isActive}>
-                      <a href={item.url}>{item.title}</a>
+                      {item.external ? (
+                        <a href={item.url} target="_blank" rel="noreferrer">
+                          {item.title}
+                        </a>
+                      ) : (
+                        <NavLink to={item.url}>{item.title}</NavLink>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
