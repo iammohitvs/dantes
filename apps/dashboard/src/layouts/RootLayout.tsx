@@ -2,7 +2,7 @@ import Loader from "@/components/Loader";
 import { AppSidebar } from "@/components/Sidebar";
 import { useValidateAuth } from "@/hooks/auth.hooks";
 import React, { useState } from "react";
-import { Outlet } from "react-router";
+import { Navigate, Outlet } from "react-router";
 import { useNavigate } from "react-router";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
@@ -15,7 +15,7 @@ const RootLayout = () => {
   }
 
   if (error) {
-    navigate("/login");
+    return <Navigate to={"/login"} replace />
   }
 
   if (data) {
