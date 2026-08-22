@@ -16,6 +16,7 @@ Deploy it once, and use in any language.
   - [Setup](#setup)
       - [1. Clone dantes](#1-clone-dantes)
       - [2. Run the setup script](#2-run-the-setup-script)
+      - [3. Vieww the server logs](#3-vieww-the-server-logs)
   - [How it works](#how-it-works)
     - [Creating a queue:](#creating-a-queue)
     - [Creating a job:](#creating-a-job)
@@ -45,6 +46,14 @@ cd dantes
 chmod +x setup.sh
 
 ./setup.sh
+```
+
+#### 3. Vieww the server logs
+
+```sh
+cd dantes
+
+docker logs -f -t --since "$(date -u +%Y-%m-%dT%H:%M:%SZ)" dantes-server
 ```
 
 ## How it works
