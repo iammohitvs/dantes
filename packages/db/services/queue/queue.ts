@@ -15,9 +15,7 @@ export const getQueueById = async (queueId: string): SingleQueue => {
 
 export const getAllQueues = async (): ManyQueues => {
   const foundQueues = await db.select().from(db_utils.QueueSchema);
-
-  if (foundQueues.length) return foundQueues;
-  else return null;
+  return foundQueues;
 };
 
 export const getQueueCallbackUrl = async (
