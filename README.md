@@ -14,9 +14,9 @@ Deploy it once, and use in any language.
   - [Table of contents](#table-of-contents)
   - [What is Dantes?](#what-is-dantes)
   - [Setup](#setup)
-      - [1. Clone dantes](#1-clone-dantes)
-      - [2. Run the setup script](#2-run-the-setup-script)
-      - [3. Vieww the server logs](#3-vieww-the-server-logs)
+    - [1. Clone dantes](#1-clone-dantes)
+    - [2. Run the setup script](#2-run-the-setup-script)
+    - [3. View the server logs](#3-view-the-server-logs)
   - [How it works](#how-it-works)
     - [Creating a queue:](#creating-a-queue)
     - [Creating a job:](#creating-a-job)
@@ -48,11 +48,9 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
-#### 3. Vieww the server logs
+#### 3. View the server logs
 
 ```sh
-cd dantes
-
 docker logs -f -t --since "$(date -u +%Y-%m-%dT%H:%M:%SZ)" dantes-server
 ```
 
@@ -73,7 +71,7 @@ Dantes is very very quick, with millisecond response times imminent. It uses an 
 ### Creating a queue:
 
 ```sh
-curl -X POST "https://you-dantes-domain/queue/" \
+curl -X POST "https://your-dantes-domain/queue/" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test Queue",
@@ -88,7 +86,7 @@ curl -X POST "https://you-dantes-domain/queue/" \
 
 ```sh
 # For immediate execution
-curl -X POST "https://you-dantes-domain/job/" \
+curl -X POST "https://your-dantes-domain/job/" \
   -H "Content-Type: application/json" \
   -d '{
     "payload": "{\"test\": \"payload\"}",
@@ -98,7 +96,7 @@ curl -X POST "https://you-dantes-domain/job/" \
 
 ```sh
 # Schedule a one-time job
-curl -X POST "https://you-dantes-domain/job/" \
+curl -X POST "https://your-dantes-domain/job/" \
   -H "Content-Type: application/json" \
   -d '{
     "payload": "{\"test\": \"payload\"}",
@@ -109,7 +107,7 @@ curl -X POST "https://you-dantes-domain/job/" \
 
 ```sh
 # CRON jobs
-curl -X POST "https://you-dantes-domain/job/" \
+curl -X POST "https://your-dantes-domain/job/" \
   -H "Content-Type: application/json" \
   -d '{
     "payload": "{\"test\": \"payload\"}",
